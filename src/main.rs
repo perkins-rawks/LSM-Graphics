@@ -59,17 +59,20 @@ use kiss3d::camera::ArcBall;
 use kiss3d::light::Light;
 use kiss3d::scene::SceneNode;
 use kiss3d::window::Window;
+// use kiss3d::resource::{GPUVec, BufferType, AllocationType};
 
 use nalgebra::geometry::Translation3;
 use nalgebra::Point3;
 
 use rand::prelude::*;
 use rand_distr::{Distribution, Normal};
-// let val: f64 = thread_rng().sample(StandardNormal);
 
 // window, number of neurons, location to be centered around, variance (for bell
 // curve)
 fn cluster(window: &mut Window, n: usize, loc: &Point3<f32>, var: f32) {
+    // StreamDraw means we will constantly change the vector
+    // Dynamic
+    // let mut spheres = GPUVec::new(Vec::new(), BufferType::Array, AllocationType::StreamDraw);
     let mut spheres: Vec<SceneNode> = Vec::new();
     let mut rng = rand::thread_rng(); // a single random number
     let color = (rng.gen(), rng.gen(), rng.gen());
@@ -84,13 +87,16 @@ fn cluster(window: &mut Window, n: usize, loc: &Point3<f32>, var: f32) {
             normal_y.sample(&mut rng),
             normal_z.sample(&mut rng),
         );
+        // if let Some(spheres) = spheres.data_mut() {
+        //     spheres.push(window.add_sphere(0.1));
+        //     spheres[sphere].set_color(color.0, color.1, color.2);
+        //     spheres[sphere].append_translation(&t);
+        // }
 
         spheres.push(window.add_sphere(0.1));
         spheres[sphere].set_color(color.0, color.1, color.2);
         spheres[sphere].append_translation(&t);
     }
-
-    // spheres
 }
 
 fn main() {
@@ -98,19 +104,19 @@ fn main() {
     let at = Point3::origin();
     let mut first_person = ArcBall::new(eye, at);
 
-    let mut window = Window::new("Neuron Cluters in Brain");
+    let mut window = Window::new("Neuron Clusters in Brain");
     window.set_light(Light::StickToCamera);
 
     // number of neurons in a single cluster
     let mut n = 1000;
-    let mut var: f32 = 1.0;
+    let mut var: f32 = 2.0;
 
-    // Generate a cluster by giving it a clucter center (-1., 2., -3.)
+    // Generate a cluster by giving it a cluster center (-1., 2., -3.)
     let c1 = Point3::new(-1., 2., -3.);
     cluster(&mut window, n, &c1, var);
 
     n = 500;
-    var = 0.75;
+    var = 1.5;
     let c2 = Point3::new(5., -1.3, -3.4);
     cluster(&mut window, n, &c2, var);
 
@@ -120,20 +126,20 @@ fn main() {
     // This renders whatever
     let scale = 10.;
     while window.render_with_camera(&mut first_person) {
-        window.draw_line(
-            &Point3::new(-scale, 0.0, 0.0),
-            &Point3::new(scale, 0.0, 0.0),
-            &Point3::new(1.0, 0.0, 0.0),
-        );
-        window.draw_line(
-            &Point3::new(0.0, -scale, 0.0),
-            &Point3::new(0.0, scale, 0.0),
-            &Point3::new(0.0, 1.0, 0.0),
-        );
-        window.draw_line(
-            &Point3::new(0.0, 0.0, -scale),
-            &Point3::new(0.0, 0.0, scale),
-            &Point3::new(0.0, 0.0, 1.0),
-        );
+        // window.draw_line(
+        //     &Point3::new(-scale, 0.0, 0.0),
+        //     &Point3::new(scale, 0.0, 0.0),
+        //     &Point3::new(1.0, 0.0, 0.0),
+        // );
+        // window.draw_line(
+        //     &Point3::new(0.0, -scale, 0.0),
+        //     &Point3::new(0.0, scale, 0.0),
+        //     &Point3::new(0.0, 1.0, 0.0),
+        // );
+        // window.draw_line(
+        //     &Point3::new(0.0, 0.0, -scale),
+        //     &Point3::new(0.0, 0.0, scale),
+        //     &Point3::new(0.0, 0.0, 1.0),
+        // );
     }
 }
