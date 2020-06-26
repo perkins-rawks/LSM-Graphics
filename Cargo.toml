@@ -1,5 +1,5 @@
 [package]
-name = "LSM-Graphics"
+name = "lsm-graphics"
 version = "0.1.0"
 authors = ["RockLikeBusStop <arasam1067@gmail.com>"]
 edition = "2018"
