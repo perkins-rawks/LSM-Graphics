@@ -232,7 +232,7 @@ fn avg_connects(connections: &DMatrix<u32>, n: usize, c: f32, lambda: f32) {
     }
     let avg: f32 = (sum_connects - n as u32) as f32 / n as f32;
     println!(
-        "\nC     : {}\nLambda: {}\nAverage number of connections per neuron: {}\n",
+        "\nC     : {}\nLambda: {}\nAverage number of connections per neuron: {:.2}\n",
         c, lambda, avg
     );
 }
