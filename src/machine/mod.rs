@@ -62,9 +62,9 @@ impl LSM {
                 normal_z.sample(&mut rng),
             );
             // debug
-            if sphere < 2 {
-                println!("{:?}", t);
-            }
+            // if sphere < 2 {
+            //     println!("{:?}", t);
+            // }
 
             let temp_connect: Vec<u32> = Vec::new();
             let neuron: Neuron = Neuron::new(window.add_sphere(radius), temp_connect);
