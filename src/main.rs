@@ -19,6 +19,7 @@ use std::fs::File;
 use std::io::Write;
 
 use kiss3d::camera::ArcBall;
+use kiss3d::event::{Action, Key, WindowEvent};
 use kiss3d::light::Light;
 use kiss3d::scene::SceneNode;
 use kiss3d::window::Window;
@@ -92,7 +93,7 @@ impl LSM {
         }
     }
 
-    // Cluster Methods --------------------------------------------------------------------
+    // Cluster Methods \\
     pub fn make_cluster(
         &mut self,
         window: &mut Window,        // Our screen
@@ -242,7 +243,7 @@ impl LSM {
                     connect_lines.push((
                         Point3::new(x1, y1, z1), // point 1
                         Point3::new(x2, y2, z2), // point 2
-                        Point3::new(1., 1., 1.), // color of edge
+                        Point3::new(0.8, 0.8, 0.8), // color of edge
                     ));
                     dist_list.push(d); // edge length
                 }
@@ -253,13 +254,14 @@ impl LSM {
         (connect_lines, dist_list)
     }
 
-    pub fn remove_disconnects(&mut self) {
+    pub fn remove_disconnects(&mut self, window: &mut Window) {
         // Removes neurons that are not connected to any other neurons \\
         let mut rm_n: Vec<usize> = Vec::new(); // You can collect and re-add these in
         for idx in 0..self.neurons.len() {
             let sum_connects: u32 = self.neurons[idx].get_connects().iter().sum();
             if sum_connects == 1 {
-                self.neurons[idx].get_obj().set_visible(false);
+                // self.neurons[idx].get_obj().set_visible(false);
+                window.remove_node(self.neurons[idx].get_obj());
                 rm_n.push(idx); // You can collect and re-add these in
             }
         }
@@ -325,28 +327,55 @@ impl LSM {
 
 fn render_lines(
     window: &mut Window,                                 // Our window
-    axis_on: bool, // True - axis lines visible, False - invisible
-    axis_len: f32, // The length of the axis lines
+    axis_len: f32,                                       // The length of the axis lines
     lines: Vec<(Point3<f32>, Point3<f32>, Point3<f32>)>, // The edges between neurons
-    lines_on: bool, // True - edges between neurons, False - no edges
-    l: &mut LSM, // List of neurons
+    l: &mut LSM,                                         // List of neurons
     rm_dis_n: bool, // False - All Neurons, True - Remove Neuron with no connections
 ) {
     // Renders the edges between neurons as well as the lines of axis. \\
+    let mut axis_on: bool = true;
+    let mut lines_on: bool = true;
+    let mut yaw: bool = true;
 
     // We want to start off at a point other than the origin so we don't have to
     // zoom out immediately.
     let eye = Point3::new(10.0f32, 10.0, 10.0);
     let at = Point3::origin();
-    let mut first_person = ArcBall::new(eye, at);
+    let mut arc_ball = ArcBall::new(eye, at);
 
     // Removes neurons that are not connected to any other neurons
     if rm_dis_n {
-        l.remove_disconnects();
+        l.remove_disconnects(window);
     }
+    // window.se();
 
-    // First person allows for some useful user controls.
-    while window.render_with_camera(&mut first_person) {
+    // Arc ball allows for some useful user controls.
+    while window.render_with_camera(&mut arc_ball) {
+        // update the current camera.
+        for event in window.events().iter() {
+            // When a key is pressed, put it into key
+            match event.value {
+                WindowEvent::Key(key, Action::Release, _) => {
+                    // Turn on or off the axis with A
+                    if key == Key::A {
+                        axis_on = !axis_on;
+                    // Turn on or off the edges with L
+                    } else if key == Key::L {
+                        lines_on = !lines_on;
+                    // Turn on or off the yaw with Y
+                    } else if key == Key::Y {
+                        yaw = !yaw;
+                    }
+                }
+                _ => {}
+            }
+        }
+
+        if yaw {
+            let curr_yaw = arc_ball.yaw();
+            arc_ball.set_yaw(curr_yaw + 0.025);
+        }
+        // A yaw rotates the whole window slowly, but allows us
         // Our axis lines
         // x axis - Red
         // y axis - Green
@@ -449,9 +478,8 @@ fn min_max(dists: &Vec<f32>) -> (f32, f32) {
 
 fn main() {
     // Important Variables \\
-    let mut window = Window::new("Neuron Clusters in Brain"); // For graphics display
+    let mut window = Window::new("Liquid State Machine"); // For graphics display
     window.set_light(Light::StickToCamera); // Graphics settings
-
     // let mut spheres: Vec<SceneNode> = Vec::new();
     // let mut neurons: Vec<Neuron> = Vec::new();
     // let mut clusters: Vec<Vec<Neuron>> = Vec::new();
@@ -460,7 +488,7 @@ fn main() {
     // Creating Test Clusters \\
     let mut n = 200; // The number of neurons in a single cluster
     let mut var: f32 = 1.25; //1.75 // The variance in stdev
-    let r = 0.1; // The radius of a single sphere
+    let r = 0.05; // The radius of a single sphere
 
     // Generate a cluster by giving it a cluster center (-1., 2., -3.)
     // e.g
@@ -544,18 +572,8 @@ fn main() {
 
     // Rendering \\
     let axis_len = 10.;
-    let axis_on = false;
-    let lines_on = true;
     let rm_dis_n = true;
-    render_lines(
-        &mut window,
-        axis_on,
-        axis_len,
-        lines,
-        lines_on,
-        &mut l1,
-        rm_dis_n,
-    );
+    render_lines(&mut window, axis_len, lines, &mut l1, rm_dis_n);
 
     // Refers back to how many neurons it used to have before they were removed
     // to figure out how many were removed
