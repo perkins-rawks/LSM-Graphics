@@ -74,47 +74,51 @@ impl Neuron {
 }
 
 // TO DO: LSM STRUCT
-// struct LSM {
-//     // Big structure of clustered up neurons and connections
-//     clusters: Vec<Vec<Neuron>>,
-//     neurons: Vec<Neuron>,
-//     // readout: Vec<Neuron>,
-//     // output: Vec<
-// }
+struct LSM {
+    // Big structure of clustered up neurons and connections
+    clusters: Vec<Vec<Neuron>>,
+    neurons: Vec<Neuron>,
+    // readout: Vec<Neuron>,
+    // output: Vec<
+}
 
-// impl LSM {
-//     fn new(clusters: Vec<Vec<Neuron>>, neurons: Vec<Neuron>) -> LSM {
-//         Self {
-//             // maybe number of clusters, radius of brain sphere, etc
-//             clusters: clusters,
-//             neurons: neurons,
-//         }
-//     }
+impl LSM {
+    fn new(clusters: Vec<Vec<Neuron>>, neurons: Vec<Neuron>) -> LSM {
+        Self {
+            // maybe number of clusters, radius of brain sphere, etc
+            clusters: clusters,
+            neurons: neurons,
+        }
+    }
 
-//     fn set_clusters(&mut self, new_clusters: Vec<Vec<Neuron>>) {
-//         self.clusters = new_clusters;
-//     }
+    fn set_clusters(&mut self, new_clusters: Vec<Vec<Neuron>>) {
+        self.clusters = new_clusters;
+    }
 
-//     fn add_clusters(&mut self, add_cluster: Vec<Neuron>) {
-//         self.clusters.push(add_cluster);
-//     }
+    fn add_clusters(&mut self, add_cluster: Vec<Neuron>) {
+        self.clusters.push(add_cluster);
+    }
 
-//     fn add_neurons(&mut self, new_neurons: Vec<Neuron>) {
-//         for new_neuron in new_neurons.iter() {
-//             self.neurons.push(new_neuron.clone());
-//         }
-//     }
-//     fn add_neuron(&mut self, add_neuron: Neuron) {
-//         self.neurons.push(add_neuron.clone());
-//     }
-//     // fn plot() {
-//     //     // plots each cluster in a 3d simulation
-//     // }
+    fn get_clusters(&self) -> &Vec<Vec<Neuron>> {
+        &self.clusters
+    }
 
-//     // fn create (self) {
-//     //     // Make the outer brain and the inner clusters based on attributes
-//     // }
-// }
+    fn add_neurons(&mut self, new_neurons: Vec<Neuron>) {
+        for new_neuron in new_neurons.iter() {
+            self.neurons.push(new_neuron.clone());
+        }
+    }
+    fn add_neuron(&mut self, add_neuron: Neuron) {
+        self.neurons.push(add_neuron.clone());
+    }
+    // fn plot() {
+    //     // plots each cluster in a 3d simulation
+    // }
+
+    // fn create (self) {
+    //     // Make the outer brain and the inner clusters based on attributes
+    // }
+}
 
 fn make_cluster(
     window: &mut Window,        // Our screen
@@ -371,7 +375,7 @@ fn analysis(
 ) {
     // Calculates the average number of connections per neuron and outputs some information about \\
     // hyper parameters to the terminal.                                                          \\
-
+    let mut data: Vec<String> = Vec::new();
     let mut sum_connects: u32 = 0; // The number of connections in total
     let mut sum_dist: f32 = 0.; // The total length of all edges in a cluster
     for connect in connections.iter() {
@@ -385,18 +389,31 @@ fn analysis(
     // diagonal represents the connections of a neuron to itself.
     let avg_num: f32 = (sum_connects - n as u32) as f32 / n as f32;
     let avg_dist: f32 = sum_dist / dists.len() as f32;
-    println!(
-        "\nC     : {}\nLambda: {:.2}\n\nAverage number of connections per neuron: {:.2}\nAverage distance between connection     : {:.2}",
+    data.push(format!(
+        "\nC     : {}\nLambda: {:.2}\n\nAverage number of connections per neuron: {:.2}\nAverage distance between connection     : {:.2}\n",
         c, lambda, avg_num, avg_dist
-    );
+    ));
     let m = min_max(dists);
-    println!(
-        "\nFarthest connection: {:.2}\nClosest connection : {:.2}",
+    data.push(format!(
+        "\nFarthest connection: {:.2}\nClosest connection : {:.2}\n",
         m.1, m.0
-    );
+    ));
+
     if rm_n {
-        println!("\nNumber of disconnected Neurons: {}\n", rm_n_count);
+        data.push(format!(
+            "\nNumber of disconnected Neurons: {}\n",
+            rm_n_count
+        ));
     }
+
+    let mut f = File::create("analysis.txt").expect("Unable to create file");
+    for datum in data.iter() {
+        f.write_all(datum.as_bytes()).expect("Unable to write data");
+    }
+
+    // for datum in data.iter() {
+    //     println!("{}", datum);
+    // }
 }
 
 fn min_max(dists: &Vec<f32>) -> (f32, f32) {
@@ -437,6 +454,7 @@ fn main() {
     // let mut spheres: Vec<SceneNode> = Vec::new();
     let mut neurons: Vec<Neuron> = Vec::new();
     let mut clusters: Vec<Vec<Neuron>> = Vec::new();
+    let l1 = LSM::new(clusters, neurons);
 
     // Creating Test Clusters \\
     let mut n = 200; // The number of neurons in a single cluster
