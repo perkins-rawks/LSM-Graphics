@@ -39,6 +39,7 @@ fn render_lines(
     let mut axis_on: bool = false;
     let mut lines_on: bool = true;
     let mut yaw: bool = false;
+    let mut sp_on: bool = false;
 
     // We want to start off at a point other than the origin so we don't have to
     // zoom out immediately.
@@ -68,10 +69,18 @@ fn render_lines(
                     // Turn on or off the yaw with Y
                     } else if key == Key::Y {
                         yaw = !yaw;
+                    } else if key == Key::I {
+                        sp_on = !sp_on;
+                        // sp_show(l);
                     }
                 }
                 _ => {}
             }
+        }
+
+        if ! sp_on {
+            sp_show(l);
+            sp_on = !sp_on;
         }
 
         if yaw {
@@ -107,6 +116,14 @@ fn render_lines(
                 window.draw_line(&coords.0, &coords.1, &coords.2);
             }
         }
+    }
+}
+
+fn sp_show(l: &mut LSM) {
+    let neurons = l.get_neurons();
+    let invisible: bool = neurons[0].get_obj().is_visible();
+    for n_idx in 0..neurons.len() {
+        neurons[n_idx].get_obj().set_visible(!invisible);
     }
 }
 
