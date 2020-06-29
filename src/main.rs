@@ -39,7 +39,7 @@ fn render_lines(
     let mut axis_on: bool = false;
     let mut lines_on: bool = true;
     let mut yaw: bool = false;
-    let mut sp_on: bool = false;
+    let mut sp_on: bool = true;
 
     // We want to start off at a point other than the origin so we don't have to
     // zoom out immediately.
