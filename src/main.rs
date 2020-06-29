@@ -36,14 +36,14 @@ fn render_lines(
     rm_dis_n: bool, // False - All Neurons, True - Remove Neuron with no connections
 ) {
     // Renders the edges between neurons as well as the lines of axis. \\
-    let mut axis_on: bool = false;
+    let mut axis_on: bool = true;
     let mut lines_on: bool = true;
     let mut yaw: bool = false;
     let mut sp_on: bool = true;
 
     // We want to start off at a point other than the origin so we don't have to
     // zoom out immediately.
-    let eye = Point3::new(10.0f32, 10.0, 10.0);
+    let eye = Point3::new(5.0, 5.0, 5.0);
     let at = Point3::origin();
     let mut arc_ball = ArcBall::new(eye, at);
 
@@ -69,7 +69,7 @@ fn render_lines(
                     // Turn on or off the yaw with Y
                     } else if key == Key::Y {
                         yaw = !yaw;
-                    } else if key == Key::I {
+                    } else if key == Key::S {
                         sp_on = !sp_on;
                         // sp_show(l);
                     }
@@ -78,7 +78,7 @@ fn render_lines(
             }
         }
 
-        if ! sp_on {
+        if !sp_on {
             sp_show(l);
             sp_on = !sp_on;
         }
@@ -121,9 +121,12 @@ fn render_lines(
 
 fn sp_show(l: &mut LSM) {
     let neurons = l.get_neurons();
-    let invisible: bool = neurons[0].get_obj().is_visible();
-    for n_idx in 0..neurons.len() {
-        neurons[n_idx].get_obj().set_visible(!invisible);
+    if neurons.len() > 0 {
+        // assert neurons is non empty
+        let invisible: bool = neurons[0].get_obj().is_visible();
+        for n_idx in 0..neurons.len() {
+            neurons[n_idx].get_obj().set_visible(!invisible);
+        }
     }
 }
 
@@ -150,10 +153,14 @@ fn analysis(
 
     // For connects, we subtract by n because there are n "dead" connections since the entries on the main
     // diagonal represents the connections of a neuron to itself.
-    let avg_num: f32 = (sum_connects - n as u32) as f32 / n as f32;
-    let avg_dist: f32 = sum_dist / dists.len() as f32;
+    let avg_num: f32 = (sum_connects - n as u32) as f32 / n as f32; // if n = 0, then it returns NaN
+    let avg_dist: f32 = sum_dist / dists.len() as f32; // another div by 0 if dists is empty
     data.push(format!("C     : {}\nLambda: {:.2}\n", c, lambda));
-    data.push(format!("\nTotal connections: {}", sum_connects - n as u32));
+    data.push(format!("\nNumber of Neurons: {}", n));
+    data.push(format!(
+        "\nNumber of connections: {}\n",
+        sum_connects - n as u32
+    ));
     data.push(format!("\nAverage number of connections per neuron: {:.2}\nAverage distance between connection     : {:.2}\n",
         avg_num, avg_dist
     ));
@@ -164,24 +171,22 @@ fn analysis(
     ));
 
     if rm_n {
-        data.push(format!(
-            "\nNumber of disconnected Neurons: {}\n",
-            rm_n_count
-        ));
+        data.push(format!("\nNumber of disconnected Neurons: {}", rm_n_count));
+        data.push(format!("\nNumber of remaining Neurons: {}", n - rm_n_count));
     }
 
     let mut f = File::create("analysis.txt").expect("Unable to create file");
     for datum in data.iter() {
         f.write_all(datum.as_bytes()).expect("Unable to write data");
     }
-
-    // for datum in data.iter() {
-    //     println!("{}", datum);
-    // }
 }
 
 fn min_max(dists: &Vec<f32>) -> (f32, f32) {
     // Helper function to get the minimum and maximum in a vector of floats. \\
+    if dists.len() == 0 {
+        return (f32::NAN, f32::NAN);
+    }
+
     let mut min = dists[0];
     let mut max = dists[0];
     for d in dists.iter() {
@@ -200,98 +205,37 @@ fn main() {
     // Important Variables \\
     let mut window = Window::new("Liquid State Machine"); // For graphics display
     window.set_light(Light::StickToCamera); // Graphics settings
-                                            // let mut spheres: Vec<SceneNode> = Vec::new();
-                                            // let mut neurons: Vec<Neuron> = Vec::new();
-                                            // let mut clusters: Vec<Vec<Neuron>> = Vec::new();
-    let mut l1 = LSM::new(Vec::new(), Vec::new());
+    let mut l1 = LSM::new(4, 5);
 
     // Creating Test Clusters \\
-    let mut n = 200; // The number of neurons in a single cluster
-    let mut var: f32 = 1.25; //1.75 // The variance in stdev
-    let r = 0.1; // The radius of a single sphere
-
-    // Generate a cluster by giving it a cluster center (-1., 2., -3.)
-    // e.g
-    // let c1000 = Point3::new(-1., 2., -3.);
-
     // Cluster 1 \\
-    let c1 = Point3::new(2.5, 2.5, 3.0);
-    let color1 = (0.2578, 0.5273, 0.957);
-    // let clust1: Vec<SceneNode> = make_cluster(&mut window, n, r, &c1, var, (0.2578, 0.5273, 0.957));
-    // let clust1: Vec<Neuron> = make_cluster(&mut window, n, r, &c1, var, color1);
-    // // clusters.push(clust1);
-    // l1.add_cluster(clust1);
+    let n = 10; // The number of neurons in a single cluster
+    let var: f32 = 0.35; //1.75 // The variance in std. dev.
+    let r = 0.1; // The radius of a single sphere
+    let c1 = Point3::new(0.0, 0.0, 0.0);
+    let color1 = (0.2578, 0.5273, 0.957); //blueish
+                                          // A cluster takes a window, a size, radius, center, variance, and color
     l1.make_cluster(&mut window, n, r, &c1, var, color1);
-    // dist(clust1[0].data().local_translation(),
-    // clust1[1].data().local_translation());
-
-    // Cluster 2 \\
-    n = 150;
-    var = 1.15; // 1.55
-                // let c400 = Point3::new(5., -1.3, -3.4);
-    let c2 = Point3::new(-2.5, 2.5, -1.0);
-    let color2 = (0.9453, 0.0938, 0.6641);
-    // let clust2: Vec<Neuron> = make_cluster(&mut window, n, r, &c2, var, color2);
-    // // clusters.push(clust2);
-    // l1.add_cluster(clust2);
-    l1.make_cluster(&mut window, n, r, &c2, var, color2);
-    // dist(clust1[0].data().local_translation(), clust2[1].data().local_translation());
-
-    // Cluster 3 \\
-    // let c600 = Point3::new(3., 6., 1.);
-    let c3 = Point3::new(2.0, 1.5, -2.5);
-    let color3 = (0.9453, 0.8203, 0.0938);
-    // let clust3: Vec<Neuron> = make_cluster(&mut window, n, r, &c3, var, color3);
-    // // clusters.push(clust3);
-    // l1.add_cluster(clust3);
-    l1.make_cluster(&mut window, n, r, &c3, var, color3);
-
-    // Cluster 4 \\
-    n = 100;
-    var = 1.075;
-    let c4 = Point3::new(-1.2, -0.5, 2.5);
-    let color4 = (0.2266, 0.875, 0.4023);
-    // let clust4: Vec<Neuron> = make_cluster(&mut window, n, r, &c4, var, color4);
-    // // clusters.push(clust4);
-    // l1.add_cluster(clust4);
-    l1.make_cluster(&mut window, n, r, &c4, var, color4);
 
     // Line Drawing \\
     // Some of these may have been changed from spheres to neurons in name.
 
-    // unpack(&clusters, &mut spheres);
-    // unpack(&clusters, &mut neurons);
-    // l1.unpack();
-
-    // let sp_len = spheres.len();\
     let n_len = l1.get_neurons().len();
-    // let mut connections = DMatrix::<u32>::zeros(sp_len, sp_len);
-    // let mut connections = DMatrix::<u32>::zeros(n_len, n_len);
-    // l1.add_connections(DMatrix::<u32>::zeros(n_len, n_len));
-    // connections.fill_diagonal(1); // Because all the neurons are connected to
-    // themselves
-    //l1.get_connections().fill_diagonal(1);
 
     // We found c = 0.2755 and lambda = 2. generate good results after playing around with it
     // c: .25  lambda: 1.8
-    let c = 0.25;
-    let lambda = 1.8;
-    // let connects_data = make_connects(/*&mut window,*/ &spheres, &mut connections, c, lambda);
-    // let connects_data = make_connects(
-    //     /*&mut window,*/ l1.get_neurons(),
-    //     l1.get_connections(),
-    //     c,
-    //     lambda,
-    // );
-
+    let c = 0.75; //0.25//1.
+    let lambda = 5.; //10.
     let connects_data = l1.make_connects(c, lambda);
     let lines = connects_data.0;
     let dists = connects_data.1;
 
-    // let n_count = neurons.len();
+    for n in l1.get_neurons().iter() {
+        println!("Neuron is a {}", n.get_spec());
+    }
 
     // Rendering \\
-    let axis_len = 7.5;
+    let axis_len = 3.0;
     let rm_dis_n = true;
     render_lines(&mut window, axis_len, lines, &mut l1, rm_dis_n);
 

@@ -1,11 +1,14 @@
-C     : 0.25
-Lambda: 1.80
+C     : 0.75
+Lambda: 5.00
 
-Total connections: 5910
-Average number of connections per neuron: 9.85
-Average distance between connection     : 1.67
+Number of Neurons: 10
+Number of connections: 68
 
-Farthest connection: 4.88
-Closest connection : 0.08
+Average number of connections per neuron: 6.80
+Average distance between connection     : 0.80
 
-Number of disconnected Neurons: 4
+Farthest connection: 1.46
+Closest connection : 0.16
+
+Number of disconnected Neurons: 0
+Number of remaining Neurons: 10

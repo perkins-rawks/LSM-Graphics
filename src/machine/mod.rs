@@ -5,7 +5,8 @@ use nalgebra::geometry::Translation3;
 use nalgebra::{Point3, Vector3};
 
 use rand::prelude::*;
-use rand::{SeedableRng, rngs::StdRng};
+use rand::seq::SliceRandom;
+use rand::{rngs::StdRng, SeedableRng};
 use rand_distr::{Distribution, Normal};
 
 mod neuron;
@@ -13,20 +14,26 @@ use neuron::Neuron;
 
 pub struct LSM {
     // Big structure of clustered up neurons and connections
-    pub clusters: Vec<Vec<Neuron>>,
-    pub neurons: Vec<Neuron>,
-    pub connections: DMatrix<u32>,
-    // readout: Vec<Neuron>,
-    // output: Vec<
+    clusters: Vec<Vec<Neuron>>,
+    neurons: Vec<Neuron>,
+    connections: DMatrix<u32>,
+    n_total: usize,  // the number of total neurons
+    n_inputs: usize, // the number of input neurons
+    n_outputs: usize, // the number of output neurons
+                     // readout: Vec<Neuron>,
+                     // output: Vec<
 }
 
 impl LSM {
-    pub fn new(clusters: Vec<Vec<Neuron>>, neurons: Vec<Neuron>) -> LSM {
+    pub fn new(n_inputs: usize, n_outputs: usize) -> LSM {
         Self {
             // maybe number of clusters, radius of brain sphere, etc
-            clusters: clusters,
-            neurons: neurons,
-            connections: DMatrix::<u32>::zeros(0, 0), // Starts empty because you can't fill till later
+            clusters: Vec::new(),
+            neurons: Vec::new(),
+            n_total: 0, // at least n_inputs + n_outputs
+            n_inputs: n_inputs,
+            n_outputs: n_outputs,
+            connections: DMatrix::<u32>::zeros(0, 0), // Starts empty because you can't fill until later
         }
     }
 
@@ -40,15 +47,19 @@ impl LSM {
         var: f32, // The variance in the distribution (Higher number means bell curve is wider)
         (r, g, b): (f32, f32, f32), // Color of the cluster
     ) {
+        if n == 0 {
+            println!("No neurons.");
+            return;
+        }
         // Creates a cluster of n (r,g,b)-colored, radius sized neurons around a   \\
         // center at loc, distributed around the center with variance var.         \\
         // Returns a list of spheres in a cluster.                                 \\
         // let mut spheres: Vec<SceneNode> = Vec::new(); // our output, a vector of spheres
         let mut neurons: Vec<Neuron> = Vec::new();
         let seed = [1_u8; 32]; // our seed, the 1s can be changed later
-        // let mut rng = thread_rng(); // something like that
+                               // let mut rng = thread_rng(); // something like that
         let mut rng = StdRng::from_seed(seed); // a seeded (predictable) random number
-
+                                               // println!("n: {}", n);
         for sphere in 0..n {
             // Normal takes mean and then variance
             let normal_x = Normal::new(loc[0], var).unwrap();
@@ -67,7 +78,7 @@ impl LSM {
             // }
 
             let temp_connect: Vec<u32> = Vec::new();
-            let neuron: Neuron = Neuron::new(window.add_sphere(radius), temp_connect);
+            let neuron: Neuron = Neuron::new(window.add_sphere(radius), temp_connect, "liq");
             // Push the sphere into the spheres list
             neurons.push(neuron);
             neurons[sphere].get_obj().set_color(r, g, b);
@@ -86,8 +97,55 @@ impl LSM {
 
     fn unpack(&mut self) {
         // Puts all the neurons in the cluster into a vector of neurons. \\
+        // The last neuron list in clusters
         for neuron in self.clusters[self.clusters.len() - 1].iter() {
             self.neurons.push(neuron.clone()); // sphere.clone() to avoid moving problems
+        }
+        self.n_total = self.neurons.len(); // update total neuron count
+    }
+
+    fn assign_specs(&mut self) {
+        // Assign input and readout neurons. \\
+        assert_eq!(true, self.n_total >= self.n_inputs + self.n_outputs);
+        if self.n_inputs == 0 || self.n_outputs == 0 {
+            // println!("u stupid");
+            return;
+        }
+        // tools: n_inputs, n_outputs
+        // We want to choose n_inputs neurons from all the neurons created to be
+        // inputs
+        // So, don't stop until you reach n_inputs.
+        // likewise with n_outputs
+        let seed = [2; 32];
+        let mut rng = StdRng::from_seed(seed);
+
+        // indices assoc list, note that liq_idx[n] = n
+        let mut liq_idx: Vec<usize> = (0..self.n_total).collect();
+        // for (idx, val) in liq_idx.iter().enumerate() {
+            
+        // }
+
+        // previous choices 
+        // choose a random number between 0 and n_total, put it into previous
+        // choices
+        // next time, check that the number u choose is not a previous choice (!contains)
+        let mut curr_ins: usize = 0;
+        let mut curr_outs: usize = 0;
+
+        while curr_ins < self.n_inputs {
+            let in_idx: usize = *liq_idx.choose(&mut rng).unwrap();
+            self.neurons[in_idx].set_spec("in");
+            let idx = liq_idx.iter().position(|&r| r==in_idx).unwrap();
+            liq_idx.remove(idx);
+            curr_ins += 1;
+        }
+
+        while curr_outs < self.n_outputs {
+            let out_idx: usize = *liq_idx.choose(&mut rng).unwrap();
+            self.neurons[out_idx].set_spec("out");
+            let idx = liq_idx.iter().position(|&r| r==out_idx).unwrap();
+            liq_idx.remove(idx);
+            curr_outs += 1;
         }
     }
 
@@ -111,6 +169,7 @@ impl LSM {
         c: f32, // This and lambda are hyper parameters for connect_chance function.
         lambda: f32,
     ) -> (Vec<(Point3<f32>, Point3<f32>, Point3<f32>)>, Vec<f32>) {
+        self.assign_specs();
         let n_len = self.neurons.len();
         let mut connects = DMatrix::<u32>::zeros(n_len, n_len);
         connects.fill_diagonal(1);
