@@ -3,7 +3,7 @@
 ///
 /// Authors: Awildo Gutierrez, Sampreeth Aravilli, Sosina Abuhay, Siqi Fang, Dave Perkins
 ///
-/// Date: June 27, 2020
+/// Date: June 30, 2020
 ///
 /// Description: We implement a neuron class with a visual representation
 ///
@@ -134,7 +134,7 @@ fn analysis(
     connections: &DMatrix<u32>, // The connections matrix made of 0's and 1's. 1 - connection between the indexed neurons, 0 - no connection
     dists: &Vec<f32>,           // All edge distances
     n: usize,                   // The number of neurons in a cluster
-    c: f32,                     // C and lambda are our hyper-parameters.
+    c: [f32; 4],                // C and lambda are our hyper-parameters.
     lambda: f32,
     rm_n_count: usize,
     rm_n: bool,
@@ -155,7 +155,11 @@ fn analysis(
     // diagonal represents the connections of a neuron to itself.
     let avg_num: f32 = (sum_connects - n as u32) as f32 / n as f32; // if n = 0, then it returns NaN
     let avg_dist: f32 = sum_dist / dists.len() as f32; // another div by 0 if dists is empty
-    data.push(format!("C     : {}\nLambda: {:.2}\n", c, lambda));
+    data.push(format!("Lambda: {:.2}\n", lambda));
+    data.push(format!(
+        "C     : [EE: {}, EI: {}, IE: {}, II: {}]\n",
+        c[0], c[1], c[2], c[3]
+    ));
     data.push(format!("\nNumber of Neurons: {}", n));
     data.push(format!(
         "\nNumber of connections: {}\n",
@@ -205,11 +209,11 @@ fn main() {
     // Important Variables \\
     let mut window = Window::new("Liquid State Machine"); // For graphics display
     window.set_light(Light::StickToCamera); // Graphics settings
-    let mut l1 = LSM::new(4, 5);
+    let mut l1 = LSM::new(4, 5, 0.8);
 
     // Creating Test Clusters \\
     // Cluster 1 \\
-    let n = 10; // The number of neurons in a single cluster
+    let n = 100; // The number of neurons in a single cluster
     let var: f32 = 0.35; //1.75 // The variance in std. dev.
     let r = 0.1; // The radius of a single sphere
     let c1 = Point3::new(0.0, 0.0, 0.0);
@@ -222,21 +226,20 @@ fn main() {
 
     let n_len = l1.get_neurons().len();
 
+    // The paper from Yong Zhang et al initialized the grid with neurons equidistant from each other
+
     // We found c = 0.2755 and lambda = 2. generate good results after playing around with it
     // c: .25  lambda: 1.8
-    let c = 0.75; //0.25//1.
-    let lambda = 5.; //10.
+    // let c = 0.75; //0.25//1.
+    let lambda = 2.; //5.//10.
+    let c: [f32; 4] = [0.45, 0.3, 0.6, 0.15]; // [EE, EI, IE, II]
     let connects_data = l1.make_connects(c, lambda);
     let lines = connects_data.0;
     let dists = connects_data.1;
 
-    for n in l1.get_neurons().iter() {
-        println!("Neuron is a {}", n.get_spec());
-    }
-
     // Rendering \\
     let axis_len = 3.0;
-    let rm_dis_n = true;
+    let rm_dis_n = false;
     render_lines(&mut window, axis_len, lines, &mut l1, rm_dis_n);
 
     // Refers back to how many neurons it used to have before they were removed
