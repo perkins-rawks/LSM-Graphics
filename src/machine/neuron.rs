@@ -13,7 +13,7 @@ pub static NTS: [&str; 2] = ["exc", "inh"]; // types of neurotransmitters
 pub struct Neuron {
     // maybe it should know which cluster it belongs to? and cluster could be a
     obj: SceneNode,     // a sphere design associated with the neuron
-    connects: Vec<u32>, // 1's and 0's representing a connection for 1 and not for 0
+    // connects: Vec<u32>, // 1's and 0's representing a connection for 1 and not for 0
     spec: String,       // specialization
     nt: String,         // neurotransmitter type, from the choice of NTS
     loc: Vector3<f32>,
@@ -38,13 +38,13 @@ impl Neuron {
     // Constructor for Neuron objects \\
     pub fn new(
         obj: SceneNode,
-        connects: Vec<u32>, /*, v: f32, theta: f32, v_rest: f32, n_t: String, input: bool, read_out: bool*/
+        // connects: Vec<u32>, /*, v: f32, theta: f32, v_rest: f32, n_t: String, input: bool, read_out: bool*/
         spec: &str,
     ) -> Neuron {
         assert!(true, TYPES.contains(&spec)); // has to be inside TYPES
         Self {
             obj: obj,
-            connects: connects,
+            // connects: connects,
             spec: spec.to_string(),
             // v: v,
             // theta: theta,
@@ -62,13 +62,9 @@ impl Neuron {
         &mut self.obj
     }
 
-    pub fn set_connects(&mut self, connects: Vec<u32>) {
-        self.connects = connects;
-    }
-
-    pub fn get_connects(&self) -> &Vec<u32> {
-        &self.connects
-    }
+    // pub fn set_connects(&mut self, connects: Vec<u32>) {
+    //     self.connects = connects;
+    // }
 
     pub fn set_spec(&mut self, id: &str) {
         assert!(true, TYPES.contains(&id));

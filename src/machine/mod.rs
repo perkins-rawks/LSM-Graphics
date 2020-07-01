@@ -22,10 +22,10 @@ pub struct LSM {
     n_outputs: usize,          // the number of output neurons
     // input_neurons: Vec<& Neuron>, // just the input neurons, references for safety
     // output_neurons: Vec<& Neuron>, // just the output neurons, references for safety
-    e_ratio: f32,              // 0-1 the percentage of exc neurons, all others are inhibitory
-    i_s_factor: f32,           // input to spike voltage scalar (in mV)
-                               // readout: Vec<Neuron>,
-                               // output: Vec<
+    e_ratio: f32, // 0-1 the percentage of exc neurons, all others are inhibitory
+    // i_s_factor: f32, // input to spike voltage scalar (in mV)
+                  // readout: Vec<Neuron>,
+                  // output: Vec<
 }
 
 impl LSM {
@@ -41,7 +41,7 @@ impl LSM {
             // input_neurons: Vec::new(),
             // output_neurons: Vec::new(),
             e_ratio: e_ratio,
-            i_s_factor: 1., //mV
+            // i_s_factor: 1., //mV
         }
     }
 
@@ -81,8 +81,8 @@ impl LSM {
                 normal_z.sample(&mut rng),
             );
 
-            let temp_connect: Vec<u32> = Vec::new();
-            let neuron: Neuron = Neuron::new(window.add_sphere(radius), temp_connect, "liq");
+            // let temp_connect: Vec<u32> = Vec::new();
+            let neuron: Neuron = Neuron::new(window.add_sphere(radius), /*temp_connect,*/ "liq");
             // Push the sphere into the spheres list
             neurons.push(neuron);
             //let mut curr_n: &Neuron = &neurons[sphere];
@@ -110,7 +110,7 @@ impl LSM {
         self.n_total = self.neurons.len(); // update total neuron count
     }
 
-    fn assign_specs(& mut self) {
+    fn assign_specs(&mut self) {
         // Assign input and readout neurons. \\
         assert_eq!(true, self.n_total >= self.n_inputs + self.n_outputs);
         assert_eq!(true, self.n_inputs > 0 && self.n_outputs > 0);
@@ -133,6 +133,9 @@ impl LSM {
         for _ in 0..self.n_inputs {
             let in_idx: usize = *liq_idx.choose(&mut rng).unwrap();
             self.neurons[in_idx].set_spec("in");
+            self.neurons[in_idx]
+                .get_obj()
+                .set_color(0.9453, 0.0938, 0.6641);
             // self.input_neurons.push(& self.neurons[in_idx]);
             let idx = liq_idx.iter().position(|&r| r == in_idx).unwrap();
             liq_idx.remove(idx);
@@ -163,8 +166,7 @@ impl LSM {
         // }
     }
 
-    fn assign_nt(& mut self) {
-        //
+    fn assign_nt(&mut self) {
         assert_eq!(true, self.e_ratio <= 1.);
         if self.n_total < 2 {
             for n in self.neurons.iter_mut() {
@@ -211,22 +213,21 @@ impl LSM {
         &mut self.neurons
     }
 
-    // Connection Methods -----------------------------------------------------------------
+    // Connection Methods \\
     // Returns a tuple of two vectors.
     // The first vector has two points that are the centers of two "connected"
     // neurons, and one point containing the r, g, and b values for the color of the
     // edge.
     // The second vector is a list of how long the edges are.
     pub fn make_connects(
-        & mut self,
-        c: [f32; 4], // This and lambda are hyper parameters for connect_chance function.
+        &mut self,
+        c: [f32; 5], // This and lambda are hyper parameters for connect_chance function.
         lambda: f32,
     ) -> (Vec<(Point3<f32>, Point3<f32>, Point3<f32>)>, Vec<f32>) {
         self.assign_specs();
         self.assign_nt();
-        let n_len = self.neurons.len();
+        let n_len = self.n_total;
         let mut connects = DMatrix::<u32>::zeros(n_len, n_len);
-        connects.fill_diagonal(1);
 
         // This function makes the edges between neurons based on a probability \\
         // function previously defined. We don't render the lines until later.  \\
@@ -247,52 +248,22 @@ impl LSM {
             let (x1, y1, z1) = (coord1.x, coord1.y, coord1.z);
             let idx1_nt: String = self.neurons[idx1].get_nt().clone();
 
-            // Let S = [s_1, s_2, s_3, ..., s_n] be a set of spheres. Then,
-            //  1. Every neuron is connected to itself.
-            //  2. A neural connection ab is the same as the connection ba.
-            // We can represent connections in an n x n matrix. I'll show an
-            // example for n = 4. An entry of 1 means there is a connection between
-            // the row-th neuron and the col-th neuron.
-            //
-            // e.g.
-            // idx   0 1 2 3
-            //      _________
-            //   0 | 1 0 0 0 |
-            //   1 | 0 1 0 0 |
-            //   2 | 0 0 1 0 |
-            //   3 | 0 0 0 1 |
-            // The connections on the main diagonal represent the connections of a neuron to itself (1).
-            // Say s_1 was connected to s_2 and s_3 is connected to s_1. Then the matrix is
-            //       0 1 2 3
-            //      _________
-            //   0 | 1 0 0 0 |
-            //   1 | 0 1 0 1 |
-            //   2 | 0 1 1 0 |
-            //   3 | 0 0 0 1 |
-            // However, using (2), we can say s_2 is also connected to s_1 and s_1 is also connected to s_3. So,
-            // the matrix looks like
-            // idx   0 1 2 3
-            //      _________
-            //   0 | 1 0 0 0 |
-            //   1 | 0 1 1 1 |
-            //   2 | 0 1 1 0 |
-            //   3 | 0 1 0 1 |
-            // This means that our connections matrix is symmetric, so we can cut our operations by over half to not
-            //   repeat checking entries. We only check the upper triangular
-            //   half of the matrix.
+            // We can represent connections in an n x n (column major) matrix where n is the
+            // total size of the LSM. Suppose we have 4 neurons in the LSM, and
+            // neuron 0 is connected to neuron 3 and neuron 1 is connected to 2.
+            // Then connections looks like
+            // 0 0 0 1
+            // 0 0 1 0
+            // 0 0 0 0  (Note the neuron is not connected to itself, so the)
+            // 0 0 0 0  (main diagonal is always clear.)
+            for idx2 in 0..n_len {
+                // If it's part of the diagonal, then leave it as 0
+                if idx1 == idx2 {
+                    continue;
+                }
 
-            for idx2 in idx1 + 1..n_len {
-                let coord2: &Vector3<f32> = self.neurons[idx2].get_loc();
-                let (x2, y2, z2) = (coord2.x, coord2.y, coord2.z);
-                let idx2_nt: String = self.neurons[idx2].get_nt().clone();
-
-                let d = self.dist(&(x1, y1, z1), &(x2, y2, z2)); // distance between the two points
-
-                // Choosing the correct weight based on the combination of
-                // pre-synaptic  to postsynaptic type (They can be either
-                // excitatory inhibitory)
-                // c = [EE, EI, IE, II]
                 let mut c_idx: usize = 0;
+                let idx2_nt: String = self.neurons[idx2].get_nt().clone();
                 // starts with E
                 if idx1_nt == "exc".to_string() {
                     // ends with I
@@ -312,13 +283,37 @@ impl LSM {
                     }
                 }
 
+                // the connection going the other way is on
+                if connects[(idx2, idx1)] == 1 {
+                    c_idx = 4; // a loop
+                } else if self.neurons[idx2].get_spec() == &"in".to_string()
+                    && self.neurons[idx1].get_spec() != &"in".to_string()
+                {
+                    // if input neuron
+                    c_idx = 4;
+                }
+
+                let coord2: &Vector3<f32> = self.neurons[idx2].get_loc();
+                let (x2, y2, z2) = (coord2.x, coord2.y, coord2.z);
+                // either exc or inh
+
+                let d = self.dist(&(x1, y1, z1), &(x2, y2, z2)); // distance between the two points
+
+                // Choosing the correct weight based on the combination of
+                // pre-synaptic  to postsynaptic type (They can be either
+                // excitatory inhibitory)
+                // c = [EE, EI, IE, II]
+
                 // make connections based on distance and some hyper parameters
                 let prob_connect = self.connect_chance(d, c[c_idx], lambda);
+                // if self.neurons[idx1] ==
                 let rand_num: f32 = rng.gen::<f32>();
 
                 if rand_num <= prob_connect {
                     connects[(idx1, idx2)] = 1;
-                    connects[(idx2, idx1)] = 1;
+                    if connects[(idx2, idx1)] == 1 {
+                        println!("j");
+                    }
                     connect_lines.push((
                         Point3::new(x1, y1, z1),    // point 1
                         Point3::new(x2, y2, z2),    // point 2
@@ -329,7 +324,7 @@ impl LSM {
             }
         }
         self.add_connections(connects);
-        self.update_n_connects();
+        // self.update_n_connects();
         (connect_lines, dist_list)
     }
 
@@ -337,15 +332,33 @@ impl LSM {
         // Change
 
         // Removes neurons that are not connected to any other neurons \\
-        let mut rm_n: Vec<usize> = Vec::new(); // You can collect and re-add these in
-        for idx in 0..self.neurons.len() {
-            let sum_connects: u32 = self.neurons[idx].get_connects().iter().sum();
-            if sum_connects == 1 {
-                // self.neurons[idx].get_obj().set_visible(false);
-                window.remove_node(self.neurons[idx].get_obj());
-                rm_n.push(idx); // You can collect and re-add these in
+         // You can collect and re-add these in
+        // for idx in 0..self.neurons.len() {
+        //     let sum_connects: u32 = self.neurons[idx].get_connects().iter().sum();
+        //     if sum_connects == 1 {
+        //         // self.neurons[idx].get_obj().set_visible(false);
+        //         window.remove_node(self.neurons[idx].get_obj());
+        //         rm_n.push(idx); // You can collect and re-add these in
+        //     }
+        // }
+        
+        let mut rm_n: Vec<usize> = Vec::new();
+        for col in 0..self.n_total {
+            let mut connected: bool = false; // if current neuron has a connection, true
+            for row in 0..self.n_total {
+                // We need to remove only if the neuron has no connections into
+                // or out from it.
+                if self.connections[(col, row)] == 1 || self.connections[(row, col)] == 1 {
+                    connected = true;
+                    break;
+                }
+            }
+            if !connected {
+                window.remove_node(self.neurons[col].get_obj());
+                rm_n.push(col);
             }
         }
+
         for idx in 0..rm_n.len() {
             self.neurons.remove(rm_n[idx] - idx);
         }
@@ -374,19 +387,19 @@ impl LSM {
     }
 
     // The list of connections. 1 if there is a connection, 0 if not
-    fn update_n_connects(&mut self) {
-        // This function updates the neuron's connections list using the
-        // connections matrix we made in make_connects. \\
-        let n_len = self.neurons.len();
-        for col in 0..n_len {
-            let mut n_connect: Vec<u32> = Vec::new();
-            for row in 0..n_len {
-                n_connect.push(self.connections[(col, row)]);
-            }
+    // fn update_n_connects(&mut self) {
+    //     // This function updates the neuron's connections list using the
+    //     // connections matrix we made in make_connects. \\
+    //     let n_len = self.neurons.len();
+    //     for col in 0..n_len {
+    //         let mut n_connect: Vec<u32> = Vec::new();
+    //         for row in 0..n_len {
+    //             n_connect.push(self.connections[(col, row)]);
+    //         }
 
-            self.neurons[col].set_connects(n_connect);
-        }
-    }
+    //         self.neurons[col].set_connects(n_connect);
+    //     }
+    // }
 
     fn add_connections(&mut self, connects: DMatrix<u32>) {
         self.connections = connects;

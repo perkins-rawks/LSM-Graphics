@@ -3,17 +3,20 @@
 ///
 /// Authors: Awildo Gutierrez, Sampreeth Aravilli, Sosina Abuhay, Siqi Fang, Dave Perkins
 ///
-/// Date: June 30, 2020
+/// Date: July 1, 2020
 ///
-/// Description: We implement a neuron class with a visual representation
+/// Description: We implement a neuron class with a visual representation.
 ///
-/// To do: o Finish Neuron class
-///        o Input and output layers
-///        o LSM Struct
-///        o
-///        o
+/// To do: o Finish connections
+///        o Take Input
+///        o Structure of Input vs Output dealing with clusters
+///        o Convert input to voltage
+///        o Getting liquid states
+///        o Voltage diff eq's and change in voltage function
+///        o Output layer
+///        o Recurrent structure
 */
-// extern crate lsm_graphics;
+
 use std::fs::File;
 use std::io::Write;
 
@@ -134,7 +137,7 @@ fn analysis(
     connections: &DMatrix<u32>, // The connections matrix made of 0's and 1's. 1 - connection between the indexed neurons, 0 - no connection
     dists: &Vec<f32>,           // All edge distances
     n: usize,                   // The number of neurons in a cluster
-    c: [f32; 4],                // C and lambda are our hyper-parameters.
+    c: [f32; 5],                // C and lambda are our hyper-parameters.
     lambda: f32,
     rm_n_count: usize,
     rm_n: bool,
@@ -157,8 +160,8 @@ fn analysis(
     let avg_dist: f32 = sum_dist / dists.len() as f32; // another div by 0 if dists is empty
     data.push(format!("Lambda: {:.2}\n", lambda));
     data.push(format!(
-        "C     : [EE: {}, EI: {}, IE: {}, II: {}]\n",
-        c[0], c[1], c[2], c[3]
+        "C     : [EE: {}, EI: {}, IE: {}, II: {}, Loop: {}]\n",
+        c[0], c[1], c[2], c[3], c[4]
     ));
     data.push(format!("\nNumber of Neurons: {}", n));
     data.push(format!(
@@ -213,7 +216,7 @@ fn main() {
 
     // Creating Test Clusters \\
     // Cluster 1 \\
-    let n = 100; // The number of neurons in a single cluster
+    let n = 10; // The number of neurons in a single cluster
     let var: f32 = 0.35; //1.75 // The variance in std. dev.
     let r = 0.1; // The radius of a single sphere
     let c1 = Point3::new(0.0, 0.0, 0.0);
@@ -232,14 +235,14 @@ fn main() {
     // c: .25  lambda: 1.8
     // let c = 0.75; //0.25//1.
     let lambda = 2.; //5.//10.
-    let c: [f32; 4] = [0.45, 0.3, 0.6, 0.15]; // [EE, EI, IE, II]
+    let c: [f32; 5] = [0.45, 0.3, 0.6, 0.15, 0.1]; // [EE, EI, IE, II, Loop]
     let connects_data = l1.make_connects(c, lambda);
     let lines = connects_data.0;
     let dists = connects_data.1;
 
     // Rendering \\
     let axis_len = 3.0;
-    let rm_dis_n = false;
+    let rm_dis_n = true;
     render_lines(&mut window, axis_len, lines, &mut l1, rm_dis_n);
 
     // Refers back to how many neurons it used to have before they were removed
