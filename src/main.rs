@@ -3,7 +3,7 @@
 ///
 /// Authors: Awildo Gutierrez, Sampreeth Aravilli, Sosina Abuhay, Siqi Fang, Dave Perkins
 ///
-/// Date: July 1, 2020
+/// Date: July 2, 2020
 ///
 /// Description: We implement a neuron class with a visual representation.
 ///
@@ -23,26 +23,37 @@ use std::io::Write;
 use kiss3d::camera::ArcBall;
 use kiss3d::event::{Action, Key, WindowEvent};
 use kiss3d::light::Light;
+use kiss3d::scene::SceneNode;
 use kiss3d::window::Window;
 
 use nalgebra::base::DMatrix;
+use nalgebra::geometry::Translation3;
 use nalgebra::Point3;
 
 mod machine;
 use machine::LSM;
 
+const AXIS_ON: bool = true; // toggles x, y, and z axis
+const LINES_ON: bool = true; // toggles edges between neurons
+const FANCY: bool = true; // toggles directional dotted lines (white to black)
+const YAW: bool = true; // toggles a rotation along the y axis
+const SP_ON: bool = true; // toggles each neuron
+const RM_DIS_N: bool = true; // determines whether we want to remove neurons with no connections
+
 fn render_lines(
-    window: &mut Window,                                 // Our window
-    axis_len: f32,                                       // The length of the axis lines
-    lines: Vec<(Point3<f32>, Point3<f32>, Point3<f32>)>, // The edges between neurons
-    l: &mut LSM,                                         // List of neurons
+    window: &mut Window,                                  // Our window
+    axis_len: f32,                                        // The length of the axis lines
+    lines: &Vec<(Point3<f32>, Point3<f32>, Point3<f32>)>, // The edges between neurons
+    dists: &Vec<f32>,
+    l: &mut LSM,    // List of neurons
     rm_dis_n: bool, // False - All Neurons, True - Remove Neuron with no connections
 ) {
     // Renders the edges between neurons as well as the lines of axis. \\
-    let mut axis_on: bool = true;
-    let mut lines_on: bool = true;
-    let mut yaw: bool = false;
-    let mut sp_on: bool = true;
+    let mut axis_on: bool = AXIS_ON;
+    let mut lines_on: bool = LINES_ON;
+    let mut fancy: bool = FANCY;
+    let mut yaw: bool = YAW;
+    let mut sp_on: bool = SP_ON;
 
     // We want to start off at a point other than the origin so we don't have to
     // zoom out immediately.
@@ -54,7 +65,8 @@ fn render_lines(
     if rm_dis_n {
         l.remove_disconnects(window);
     }
-    // window.se();
+    // let mut connect_sp: Vec<SceneNode> = Vec::new();
+    let mut connect_sp = fancy_lines(window, lines, dists);
 
     // Arc ball allows for some useful user controls.
     while window.render_with_camera(&mut arc_ball) {
@@ -74,7 +86,9 @@ fn render_lines(
                         yaw = !yaw;
                     } else if key == Key::S {
                         sp_on = !sp_on;
-                        // sp_show(l);
+                    // sp_show(l);
+                    } else if key == Key::F {
+                        fancy = !fancy;
                     }
                 }
                 _ => {}
@@ -86,10 +100,16 @@ fn render_lines(
             sp_on = !sp_on;
         }
 
+        if !fancy {
+            fancy_show(&mut connect_sp);
+            fancy = !fancy;
+        }
+
         if yaw {
             let curr_yaw = arc_ball.yaw();
             arc_ball.set_yaw(curr_yaw + 0.025);
         }
+
         // A yaw rotates the whole window slowly, but allows us
         // Our axis lines
         // x axis - Red
@@ -122,14 +142,71 @@ fn render_lines(
     }
 }
 
-fn sp_show(l: &mut LSM) {
-    let neurons = l.get_neurons();
-    if neurons.len() > 0 {
-        // assert neurons is non empty
-        let invisible: bool = neurons[0].get_obj().is_visible();
-        for n_idx in 0..neurons.len() {
-            neurons[n_idx].get_obj().set_visible(!invisible);
+fn fancy_lines(
+    window: &mut Window, // We draw the spheres directly using the window
+    lines: &Vec<(
+        Point3<f32>, // Start point of a line
+        Point3<f32>, // Endpoint of a line
+        Point3<f32>,
+    )>, // R, G, B color values
+    dists: &Vec<f32>,    // Distance of one sphere to each other in order of LSM.neurons
+) -> Vec<SceneNode> {
+    // Alternative way to draw all the lines in the graphics. We represent lines by small spheres. \\
+    let sp_per_dist = 0.03_f32; // 1 sphere every 0.05 units
+    let mut spheres: Vec<SceneNode> = Vec::new(); // Our output
+    for idx in 0..lines.len() {
+        let n_spheres: usize = (dists[idx] / sp_per_dist) as usize; // number of spheres in 1 line
+                                                                    // Coordinates of each point
+        let x1 = (lines[idx].0)[0];
+        let y1 = (lines[idx].0)[1];
+        let z1 = (lines[idx].0)[2];
+        let x2 = (lines[idx].1)[0];
+        let y2 = (lines[idx].1)[1];
+        let z2 = (lines[idx].1)[2];
+
+        // Drawing 1 line made of 'n_spheres' spheres
+        for k in 0..n_spheres {
+            let k = (k as f32) / (n_spheres as f32); // shadowing it to do a range of floats
+            let mut sp = window.add_sphere(0.01);
+
+            // (x1, y1, z1) + k(x2 - x1, y2 - y1, z2 - z1) is each new sphere
+            // center since k increments a bit each time.
+            let t = Translation3::new(x1 + k * (x2 - x1), y1 + k * (y2 - y1), z1 + k * (z2 - z1));
+            sp.append_translation(&t);
+            // Color changes from white to black
+            sp.set_color(1.0 - k, 1.0 - k, 1.0 - k);
+            // We don't care about moving the actual sphere at this point
+            spheres.push(sp);
         }
+    }
+    spheres
+}
+
+fn sp_show(l: &mut LSM) {
+    // Toggles the visibility of neurons in an LSM \\
+    let neurons = l.get_neurons();
+    // We don't want to assert, we want it to print regardless.
+    if neurons.len() == 0 {
+        return;
+    }
+    // If one is visible, then they are all visible
+    let visible: bool = neurons[0].get_obj().is_visible();
+    for n_idx in 0..neurons.len() {
+        // get_obj() gets a reference to the sphere in a neuron
+        neurons[n_idx].get_obj().set_visible(!visible);
+    }
+}
+
+fn fancy_show(sp_list: &mut Vec<SceneNode>) {
+    // Toggles the visibility of any set of spheres. \\
+    if sp_list.len() == 0 {
+        return;
+    }
+
+    // If one is visible, then they are all visible
+    let visible: bool = sp_list[0].is_visible();
+    for sp_idx in 0..sp_list.len() {
+        sp_list[sp_idx].set_visible(!visible);
     }
 }
 
@@ -242,8 +319,8 @@ fn main() {
 
     // Rendering \\
     let axis_len = 3.0;
-    let rm_dis_n = true;
-    render_lines(&mut window, axis_len, lines, &mut l1, rm_dis_n);
+    let rm_dis_n = RM_DIS_N;
+    render_lines(&mut window, axis_len, &lines, &dists, &mut l1, rm_dis_n);
 
     // Refers back to how many neurons it used to have before they were removed
     // to figure out how many were removed

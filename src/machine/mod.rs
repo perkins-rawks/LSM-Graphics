@@ -23,7 +23,7 @@ pub struct LSM {
     // input_neurons: Vec<& Neuron>, // just the input neurons, references for safety
     // output_neurons: Vec<& Neuron>, // just the output neurons, references for safety
     e_ratio: f32, // 0-1 the percentage of exc neurons, all others are inhibitory
-    // i_s_factor: f32, // input to spike voltage scalar (in mV)
+                  // i_s_factor: f32, // input to spike voltage scalar (in mV)
                   // readout: Vec<Neuron>,
                   // output: Vec<
 }
@@ -82,7 +82,8 @@ impl LSM {
             );
 
             // let temp_connect: Vec<u32> = Vec::new();
-            let neuron: Neuron = Neuron::new(window.add_sphere(radius), /*temp_connect,*/ "liq");
+            let neuron: Neuron =
+                Neuron::new(window.add_sphere(radius), /*temp_connect,*/ "liq");
             // Push the sphere into the spheres list
             neurons.push(neuron);
             //let mut curr_n: &Neuron = &neurons[sphere];
@@ -144,6 +145,9 @@ impl LSM {
         for _ in 0..self.n_outputs {
             let out_idx: usize = *liq_idx.choose(&mut rng).unwrap();
             self.neurons[out_idx].set_spec("out");
+            self.neurons[out_idx]
+                .get_obj()
+                .set_color(0.9453, 0.8203, 0.0938);
             // self.output_neurons.push(&self.neurons[out_idx]);
             let idx = liq_idx.iter().position(|&r| r == out_idx).unwrap();
             liq_idx.remove(idx);
@@ -213,17 +217,18 @@ impl LSM {
         &mut self.neurons
     }
 
-    // Connection Methods \\
-    // Returns a tuple of two vectors.
-    // The first vector has two points that are the centers of two "connected"
-    // neurons, and one point containing the r, g, and b values for the color of the
-    // edge.
-    // The second vector is a list of how long the edges are.
+    
     pub fn make_connects(
         &mut self,
         c: [f32; 5], // This and lambda are hyper parameters for connect_chance function.
         lambda: f32,
     ) -> (Vec<(Point3<f32>, Point3<f32>, Point3<f32>)>, Vec<f32>) {
+        // Connection Methods \\
+        // Returns a tuple of two vectors.
+        // The first vector has two points that are the centers of two "connected"
+        // neurons, and one point containing the r, g, and b values for the color of the
+        // edge.
+        // The second vector is a list of how long the edges are.
         self.assign_specs();
         self.assign_nt();
         let n_len = self.n_total;
@@ -238,11 +243,7 @@ impl LSM {
         let mut rng = StdRng::from_seed(seed);
         // rng.gen::<f32>() for generating a (fixed) random number
         for idx1 in 0..n_len {
-            // To get the point location of a sphere, we call .data() to convert it to
-            // a SceneNodeData object, then call the local_translation() function to
-            // get the Translation3 object and we take the vector attribute of that which
-            // is a Vector3.
-            // FIXING STYLE TO MAKE NEURONS ABLE TO OUTPUT LOCATION
+ 
             let coord1: &Vector3<f32> = self.neurons[idx1].get_loc();
             // x, y, and z are components of a Vector3
             let (x1, y1, z1) = (coord1.x, coord1.y, coord1.z);
@@ -311,9 +312,6 @@ impl LSM {
 
                 if rand_num <= prob_connect {
                     connects[(idx1, idx2)] = 1;
-                    if connects[(idx2, idx1)] == 1 {
-                        println!("j");
-                    }
                     connect_lines.push((
                         Point3::new(x1, y1, z1),    // point 1
                         Point3::new(x2, y2, z2),    // point 2
@@ -332,7 +330,7 @@ impl LSM {
         // Change
 
         // Removes neurons that are not connected to any other neurons \\
-         // You can collect and re-add these in
+        // You can collect and re-add these in
         // for idx in 0..self.neurons.len() {
         //     let sum_connects: u32 = self.neurons[idx].get_connects().iter().sum();
         //     if sum_connects == 1 {
@@ -341,7 +339,6 @@ impl LSM {
         //         rm_n.push(idx); // You can collect and re-add these in
         //     }
         // }
-        
         let mut rm_n: Vec<usize> = Vec::new();
         for col in 0..self.n_total {
             let mut connected: bool = false; // if current neuron has a connection, true
