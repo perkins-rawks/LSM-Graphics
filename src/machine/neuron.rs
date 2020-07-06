@@ -16,6 +16,7 @@ pub struct Neuron {
     // connects: Vec<u32>, // 1's and 0's representing a connection for 1 and not for 0
     spec: String,       // specialization
     nt: String,         // neurotransmitter type, from the choice of NTS
+    cluster: String,
     loc: Vector3<f32>,
     // input: Vec<u32>,    // a spike train. 
                         // v: f32, // voltage input
@@ -40,6 +41,7 @@ impl Neuron {
         obj: SceneNode,
         // connects: Vec<u32>, /*, v: f32, theta: f32, v_rest: f32, n_t: String, input: bool, read_out: bool*/
         spec: &str,
+        cluster: &str,
     ) -> Neuron {
         assert!(true, TYPES.contains(&spec)); // has to be inside TYPES
         Self {
@@ -53,6 +55,7 @@ impl Neuron {
             // input: input,
             // read_out: read_out
             nt: "".to_string(), // neither exc nor inh
+            cluster: cluster.to_string(),
             loc: Vector3::<f32>::new(0., 0., 0.),
 
         }
@@ -82,6 +85,10 @@ impl Neuron {
     pub fn set_nt(&mut self, nt: &str) {
         assert_eq!(true, NTS.contains(&nt));
         self.nt = nt.to_string();
+    }
+
+    pub fn get_cluster(&self) -> &String{
+        &self.cluster
     }
 
     pub fn set_loc(&mut self, loc: &Translation3<f32>) {

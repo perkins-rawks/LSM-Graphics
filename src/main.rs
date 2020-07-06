@@ -3,18 +3,16 @@
 ///
 /// Authors: Awildo Gutierrez, Sampreeth Aravilli, Sosina Abuhay, Siqi Fang, Dave Perkins
 ///
-/// Date: July 2, 2020
+/// Date: July 6, 2020
 ///
 /// Description: We implement a neuron class with a visual representation.
 ///
-/// To do: o Finish connections
+/// To do: 
+///        o Make readout clusters inside of bigger clusters. 
 ///        o Take Input
-///        o Structure of Input vs Output dealing with clusters
 ///        o Convert input to voltage
 ///        o Getting liquid states
 ///        o Voltage diff eq's and change in voltage function
-///        o Output layer
-///        o Recurrent structure
 */
 
 use std::fs::File;
@@ -35,8 +33,8 @@ use machine::LSM;
 
 const AXIS_ON: bool = true; // toggles x, y, and z axis
 const LINES_ON: bool = true; // toggles edges between neurons
-const FANCY: bool = true; // toggles directional dotted lines (white to black)
-const YAW: bool = true; // toggles a rotation along the y axis
+const FANCY: bool = false; // toggles directional dotted lines (white to black)
+const YAW: bool = false; // toggles a rotation along the y axis
 const SP_ON: bool = true; // toggles each neuron
 const RM_DIS_N: bool = true; // determines whether we want to remove neurons with no connections
 
@@ -46,7 +44,6 @@ fn render_lines(
     lines: &Vec<(Point3<f32>, Point3<f32>, Point3<f32>)>, // The edges between neurons
     dists: &Vec<f32>,
     l: &mut LSM,    // List of neurons
-    rm_dis_n: bool, // False - All Neurons, True - Remove Neuron with no connections
 ) {
     // Renders the edges between neurons as well as the lines of axis. \\
     let mut axis_on: bool = AXIS_ON;
@@ -54,10 +51,12 @@ fn render_lines(
     let mut fancy: bool = FANCY;
     let mut yaw: bool = YAW;
     let mut sp_on: bool = SP_ON;
+    let rm_dis_n = RM_DIS_N;
 
     // We want to start off at a point other than the origin so we don't have to
     // zoom out immediately.
-    let eye = Point3::new(5.0, 5.0, 5.0);
+    // let eye = Point3::new(5.0, 5.0, 5.0);
+    let eye = Point3::new(10.0, 10.0, 10.0);
     let at = Point3::origin();
     let mut arc_ball = ArcBall::new(eye, at);
 
@@ -67,7 +66,10 @@ fn render_lines(
     }
 
     // let mut connect_sp: Vec<SceneNode> = Vec::new();
-    let mut connect_sp = fancy_lines(window, lines, dists);
+    let mut connect_sp: Vec<SceneNode> = Vec::new();
+    if fancy {
+        connect_sp = fancy_lines(window, lines, dists);
+    }
 
     // Arc ball allows for some useful user controls.
     while window.render_with_camera(&mut arc_ball) {
@@ -218,7 +220,6 @@ fn analysis(
     c: [f32; 5],                // C and lambda are our hyper-parameters.
     lambda: f32,
     rm_n_count: usize,
-    rm_n: bool,
 ) {
     // Calculates the average number of connections per neuron and outputs some  \\
     // information about hyper parameters to a txt file. \\
@@ -255,7 +256,7 @@ fn analysis(
         m.1, m.0
     ));
 
-    if rm_n {
+    if RM_DIS_N {
         data.push(format!("\nNumber of disconnected Neurons: {}", rm_n_count));
         data.push(format!("\nNumber of remaining Neurons: {}", n - rm_n_count));
     }
@@ -290,17 +291,45 @@ fn main() {
     // Important Variables \\
     let mut window = Window::new("Liquid State Machine"); // For graphics display
     window.set_light(Light::StickToCamera); // Graphics settings
-    let mut l1 = LSM::new(4, 5, 0.8);
+    let mut l1 = LSM::new(108, 216, 0.8);
+    // PINK: Input: 27x4 = 108  => 27 for 3x3 pic. spiketrain
+    // YELLOW: Output: 216/4 = 54/2 = 27 => 3x3 talk spike train
+
+    // Each cluster: Nothing; Talk; Run; Eat
 
     // Creating Test Clusters \\
+
+    // Colors are tetratic numbers from
+    // https://www.colorhexa.com/78866b
+
     // Cluster 1 \\
-    let n = 10; // The number of neurons in a single cluster
-    let var: f32 = 0.35; //1.75 // The variance in std. dev.
+    let mut n = 200; // The number of neurons in a single cluster
+    let mut var: f32 = 1.25; //1.75 // The variance in std. dev.
     let r = 0.1; // The radius of a single sphere
-    let c1 = Point3::new(0.0, 0.0, 0.0);
-    let color1 = (0.2578, 0.5273, 0.957); //blueish
-                                          // A cluster takes a window, a size, radius, center, variance, and color
+
+    let c1 = Point3::new(2.5, 2.5, 3.0);
+    let color1 = (134./255., 121./255., 107./255.); 
+    // A cluster takes a window, a size, radius, center, variance, and color
     l1.make_cluster(&mut window, n, r, &c1, var, color1);
+
+    n = 150;
+    var = 1.15;
+    let c2 = Point3::new(-2.5, 2.5, -1.0);
+    // let color2 = (0.9453, 0.0938, 0.6641);
+    let color2 = (120./255., 134./255., 107./255.);
+    l1.make_cluster(&mut window, n, r, &c2, var, color2);
+
+    let c3 = Point3::new(2.0, 1.5, -2.5);
+    // let color3 = (0.9453, 0.8203, 0.0938);
+    let color3 = (107./255., 120./255., 134./255.);
+    l1.make_cluster(&mut window, n, r, &c3, var, color3);
+
+    n = 100;
+    var = 1.075;
+    let c4 = Point3::new(-1.2, -0.5, 2.5);
+    // let color4 = (0.2266, 0.875, 0.4023);
+    let color4 = (121./255., 107./255., 134./255.);
+    l1.make_cluster(&mut window, n, r, &c4, var, color4);
 
     // Line Drawing \\
     // Some of these may have been changed from spheres to neurons in name.
@@ -314,14 +343,14 @@ fn main() {
     // let c = 0.75; //0.25//1.
     let lambda = 2.; //5.//10.
     let c: [f32; 5] = [0.45, 0.3, 0.6, 0.15, 0.1]; // [EE, EI, IE, II, Loop]
+    // let c: [f32; 5] = [0.25, 0.25, 0.25, 0.25, 0.1];
     let connects_data = l1.make_connects(c, lambda);
     let lines = connects_data.0;
     let dists = connects_data.1;
 
     // Rendering \\
-    let axis_len = 3.0;
-    let rm_dis_n = RM_DIS_N;
-    render_lines(&mut window, axis_len, &lines, &dists, &mut l1, rm_dis_n);
+    let axis_len = 10.0;
+    render_lines(&mut window, axis_len, &lines, &dists, &mut l1);
 
     // Refers back to how many neurons it used to have before they were removed
     // to figure out how many were removed
@@ -335,7 +364,6 @@ fn main() {
         c,
         lambda,
         rm_n_count,
-        rm_dis_n,
     );
 }
 

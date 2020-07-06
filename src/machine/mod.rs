@@ -29,7 +29,7 @@ pub struct LSM {
 }
 
 impl LSM {
-    pub fn new(n_inputs: usize, n_outputs: usize, e_ratio: f32) -> LSM {
+    pub fn new(n_inputs: usize, n_outputs: usize, e_ratio: f32 /*n_readout: f32*/ ) -> LSM {
         Self {
             // maybe number of clusters, radius of brain sphere, etc
             clusters: Vec::new(),
@@ -49,6 +49,7 @@ impl LSM {
     pub fn make_cluster(
         &mut self,
         window: &mut Window,        // Our screen
+        cluster: &str,
         n: usize,                   // The number of neurons we want in a cluster
         radius: f32,                // Radius of each sphere neuron
         loc: &Point3<f32>,          // Center of the cluster
@@ -83,7 +84,7 @@ impl LSM {
 
             // let temp_connect: Vec<u32> = Vec::new();
             let neuron: Neuron =
-                Neuron::new(window.add_sphere(radius), /*temp_connect,*/ "liq");
+                Neuron::new(window.add_sphere(radius), "liq", cluster);
             // Push the sphere into the spheres list
             neurons.push(neuron);
             //let mut curr_n: &Neuron = &neurons[sphere];
@@ -111,7 +112,7 @@ impl LSM {
         self.n_total = self.neurons.len(); // update total neuron count
     }
 
-    fn assign_specs(&mut self) {
+    fn assign_io(&mut self) {
         // Assign input and readout neurons. \\
         assert_eq!(true, self.n_total >= self.n_inputs + self.n_outputs);
         assert_eq!(true, self.n_inputs > 0 && self.n_outputs > 0);
@@ -229,7 +230,7 @@ impl LSM {
         // neurons, and one point containing the r, g, and b values for the color of the
         // edge.
         // The second vector is a list of how long the edges are.
-        self.assign_specs();
+        self.assign_io();
         self.assign_nt();
         let n_len = self.n_total;
         let mut connects = DMatrix::<u32>::zeros(n_len, n_len);
