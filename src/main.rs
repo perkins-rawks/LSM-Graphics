@@ -65,6 +65,7 @@ fn render_lines(
     if rm_dis_n {
         l.remove_disconnects(window);
     }
+
     // let mut connect_sp: Vec<SceneNode> = Vec::new();
     let mut connect_sp = fancy_lines(window, lines, dists);
 
