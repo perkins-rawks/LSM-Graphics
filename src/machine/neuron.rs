@@ -87,9 +87,9 @@ impl Neuron {
         self.nt = nt.to_string();
     }
 
-    pub fn get_cluster(&self) -> &String{
-        &self.cluster
-    }
+    // pub fn get_cluster(&self) -> &String{
+    //     &self.cluster
+    // }
 
     pub fn set_loc(&mut self, loc: &Translation3<f32>) {
         self.loc = loc.vector;

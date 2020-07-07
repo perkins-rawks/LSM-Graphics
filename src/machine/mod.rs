@@ -19,28 +19,26 @@ pub struct LSM {
     connections: DMatrix<u32>, // list of all connections (1 if connected, 0 if not)
     n_total: usize,            // the number of total neurons
     n_inputs: usize,           // the number of input neurons
-    n_outputs: usize,          // the number of output neurons
-    // input_neurons: Vec<& Neuron>, // just the input neurons, references for safety
-    // output_neurons: Vec<& Neuron>, // just the output neurons, references for safety
-    e_ratio: f32, // 0-1 the percentage of exc neurons, all others are inhibitory
-                  // i_s_factor: f32, // input to spike voltage scalar (in mV)
-                  // readout: Vec<Neuron>,
-                  // output: Vec<
+    n_clusters: usize,         // the number of cluster neurons
+    e_ratio: f32,              // 0-1 the percentage of exc neurons, all others are inhibitory
+    readouts: Vec<Vec<Neuron>>, // list of all clusters of read out neurons
+    readout_weights: Vec<DMatrix<u32>>, // list of all the plastic weights between readouts and resevoir
 }
 
 impl LSM {
-    pub fn new(n_inputs: usize, n_outputs: usize, e_ratio: f32 /*n_readout: f32*/ ) -> LSM {
+    pub fn new(n_inputs: usize, n_clusters: usize, e_ratio: f32 /*n_readout: f32*/) -> LSM {
+        assert_eq!(0, n_inputs % n_clusters);
         Self {
             // maybe number of clusters, radius of brain sphere, etc
             clusters: Vec::new(),
+            n_clusters: n_clusters,
             neurons: Vec::new(),
             connections: DMatrix::<u32>::zeros(0, 0), // Starts empty because you can't fill until later
-            n_total: 0,                               // at least n_inputs + n_outputs
+            n_total: n_inputs,                        // at least n_inputs + n_outputs
             n_inputs: n_inputs,
-            n_outputs: n_outputs,
-            // input_neurons: Vec::new(),
-            // output_neurons: Vec::new(),
             e_ratio: e_ratio,
+            readouts: Vec::new(),
+            readout_weights: Vec::new(),
             // i_s_factor: 1., //mV
         }
     }
@@ -49,12 +47,13 @@ impl LSM {
     pub fn make_cluster(
         &mut self,
         window: &mut Window,        // Our screen
-        cluster: &str,
         n: usize,                   // The number of neurons we want in a cluster
         radius: f32,                // Radius of each sphere neuron
-        loc: &Point3<f32>,          // Center of the cluster
         var: f32, // The variance in the distribution (Higher number means bell curve is wider)
+        cluster: &str, // The task for which the cluster is created (talk, eat, etc.)
+        loc: &Point3<f32>, // Center of the cluster
         (r, g, b): (f32, f32, f32), // Color of the cluster
+        n_readouts: usize,
     ) {
         if n == 0 {
             println!("No neurons.");
@@ -63,7 +62,6 @@ impl LSM {
         // Creates a cluster of n (r,g,b)-colored, radius sized neurons around a   \\
         // center at loc, distributed around the center with variance var.         \\
         // Returns a list of spheres in a cluster.                                 \\
-        // let mut spheres: Vec<SceneNode> = Vec::new(); // our output, a vector of spheres
         let mut neurons: Vec<Neuron> = Vec::new();
         let seed = [1_u8; 32]; // our seed, the 1s can be changed later
                                // let mut rng = thread_rng(); // something like that
@@ -83,92 +81,58 @@ impl LSM {
             );
 
             // let temp_connect: Vec<u32> = Vec::new();
-            let neuron: Neuron =
-                Neuron::new(window.add_sphere(radius), "liq", cluster);
-            // Push the sphere into the spheres list
+            let neuron: Neuron = Neuron::new(window.add_sphere(radius), "liq", cluster);
+            // Push the new sphere into the spheres list
             neurons.push(neuron);
-            //let mut curr_n: &Neuron = &neurons[sphere];
+            // let mut curr_n: &Neuron = &neurons[sphere];
             neurons[sphere].get_obj().set_color(r, g, b);
             neurons[sphere].get_obj().append_translation(&t);
             neurons[sphere].set_loc(&t);
-            // spheres.push(window.add_sphere(radius));
-
-            // Set the color
-            // spheres[sphere].set_color(r, g, b);
-            // Move it by our translation t
-            // spheres[sphere].append_translation(&t);
+            // get obj returns the sphere associated with a neuron
         }
-        // spheres
+
+        self.assign_input(&mut neurons);
+        let readouts: Vec<Neuron> =
+            self.make_readouts(window, n_readouts, &loc, radius, cluster.clone());
+        self.add_readouts(readouts);
         self.add_cluster(neurons);
-        self.unpack();
+        self.unpack(); //flattens the cluster list
     }
 
     fn unpack(&mut self) {
         // Puts all the neurons in the cluster into a vector of neurons. \\
         // The last neuron list in clusters
         for neuron in self.clusters[self.clusters.len() - 1].iter() {
-            self.neurons.push(neuron.clone()); // sphere.clone() to avoid moving problems
+            self.neurons.push(neuron.clone()); // .clone() to avoid moving problems
         }
         self.n_total = self.neurons.len(); // update total neuron count
     }
 
-    fn assign_io(&mut self) {
-        // Assign input and readout neurons. \\
-        assert_eq!(true, self.n_total >= self.n_inputs + self.n_outputs);
-        assert_eq!(true, self.n_inputs > 0 && self.n_outputs > 0);
+    fn assign_input(&mut self, neurons: &mut Vec<Neuron>) {
+        // Assign input neurons. All neurons are also output now. \\
+        // assert_eq!(true, self.n_total >= self.n_inputs);
+        assert_eq!(true, self.n_inputs > 0);
 
-        // tools: n_inputs, n_outputs
         // We want to choose n_inputs neurons from all the neurons created to be
-        // inputs
-        // So, don't stop until you reach n_inputs.
-        // likewise with n_outputs
+        // inputs.
         let seed = [2; 32];
         let mut rng = StdRng::from_seed(seed);
 
-        // indices assoc list
-        let mut liq_idx: Vec<usize> = (0..self.n_total).collect();
+        // This list has the indices of every unique choice for an input neuron
+        // in this struct 'neurons' list.
+        let mut liq_idx: Vec<usize> = (0..neurons.len()).collect();
 
-        // for tracking current progress
-        // let mut curr_ins: usize = 0;
-        // let mut curr_outs: usize = 0;
-
-        for _ in 0..self.n_inputs {
+        for _ in 0..(self.n_inputs / self.n_clusters) {
+            // choose chooses a random element of the list.
             let in_idx: usize = *liq_idx.choose(&mut rng).unwrap();
-            self.neurons[in_idx].set_spec("in");
-            self.neurons[in_idx]
-                .get_obj()
-                .set_color(0.9453, 0.0938, 0.6641);
-            // self.input_neurons.push(& self.neurons[in_idx]);
+            // Set to input, change the color, and remove that index so that we
+            // get unique input neurons
+            neurons[in_idx].set_spec("in");
+            neurons[in_idx].get_obj().set_color(0.9453, 0.0938, 0.6641);
+            // the index of in_idx in liq_idx
             let idx = liq_idx.iter().position(|&r| r == in_idx).unwrap();
             liq_idx.remove(idx);
         }
-
-        for _ in 0..self.n_outputs {
-            let out_idx: usize = *liq_idx.choose(&mut rng).unwrap();
-            self.neurons[out_idx].set_spec("out");
-            self.neurons[out_idx]
-                .get_obj()
-                .set_color(0.9453, 0.8203, 0.0938);
-            // self.output_neurons.push(&self.neurons[out_idx]);
-            let idx = liq_idx.iter().position(|&r| r == out_idx).unwrap();
-            liq_idx.remove(idx);
-        }
-
-        // while curr_ins < self.n_inputs {
-        //     let in_idx: usize = *liq_idx.choose(&mut rng).unwrap();
-        //     self.neurons[in_idx].set_spec("in");
-        //     let idx = liq_idx.iter().position(|&r| r == in_idx).unwrap();
-        //     liq_idx.remove(idx);
-        //     curr_ins += 1;
-        // }
-
-        // while curr_outs < self.n_outputs {
-        //     let out_idx: usize = *liq_idx.choose(&mut rng).unwrap();
-        //     self.neurons[out_idx].set_spec("out");
-        //     let idx = liq_idx.iter().position(|&r| r == out_idx).unwrap();
-        //     liq_idx.remove(idx);
-        //     curr_outs += 1;
-        // }
     }
 
     fn assign_nt(&mut self) {
@@ -187,7 +151,8 @@ impl LSM {
         let seed = [3; 32];
         let mut rng = StdRng::from_seed(seed);
 
-        // a list of indexes (0, 0), (1,1), ...
+        // This list has the indices of every unique choice for an input neuron
+        // in this struct 'neurons' list.
         let mut liq_idx: Vec<usize> = (0..self.n_total).collect();
         // Setting the excitatory neurons
         for _ in 0..n_exc {
@@ -213,24 +178,57 @@ impl LSM {
         self.clusters.push(add_cluster);
     }
 
-    // Neuron Methods ---------------------------------------------------------------------
+    // Neuron Methods \\
+
     pub fn get_neurons(&mut self) -> &mut Vec<Neuron> {
         &mut self.neurons
     }
 
-    
+    fn add_readouts(&mut self, readouts: Vec<Neuron>) {
+        self.readouts.push(readouts);
+    }
+
+    fn make_readouts(
+        &mut self,
+        window: &mut Window,
+        n_readouts: usize,
+        loc: &Point3<f32>,
+        radius: f32,
+        cluster: &str,
+    ) -> Vec<Neuron> {
+        let mut readouts: Vec<Neuron> = Vec::new();
+        for idx in 0..n_readouts {
+            let x: f32 = loc.x * 2.5;
+            let y: f32 = loc.y;
+            let z: f32 = loc.z * 2.5;
+
+            let t = Translation3::new(x, y + n_readouts as f32 / 2. - idx as f32, z);
+
+            let neuron: Neuron = Neuron::new(window.add_sphere(radius), "out", cluster);
+            readouts.push(neuron);
+
+            readouts[idx].get_obj().append_translation(&t);
+            readouts[idx].set_loc(&t);
+        }
+        readouts
+    }
+
     pub fn make_connects(
         &mut self,
         c: [f32; 5], // This and lambda are hyper parameters for connect_chance function.
         lambda: f32,
-    ) -> (Vec<(Point3<f32>, Point3<f32>, Point3<f32>)>, Vec<f32>) {
+    ) -> (
+        Vec<(Point3<f32>, Point3<f32>, Point3<f32>)>,
+        Vec<f32>,
+        Vec<(Point3<f32>, Point3<f32>, Point3<f32>)>,
+    ) {
         // Connection Methods \\
         // Returns a tuple of two vectors.
         // The first vector has two points that are the centers of two "connected"
         // neurons, and one point containing the r, g, and b values for the color of the
         // edge.
         // The second vector is a list of how long the edges are.
-        self.assign_io();
+        //self.assign_input();
         self.assign_nt();
         let n_len = self.n_total;
         let mut connects = DMatrix::<u32>::zeros(n_len, n_len);
@@ -244,7 +242,6 @@ impl LSM {
         let mut rng = StdRng::from_seed(seed);
         // rng.gen::<f32>() for generating a (fixed) random number
         for idx1 in 0..n_len {
- 
             let coord1: &Vector3<f32> = self.neurons[idx1].get_loc();
             // x, y, and z are components of a Vector3
             let (x1, y1, z1) = (coord1.x, coord1.y, coord1.z);
@@ -316,15 +313,45 @@ impl LSM {
                     connect_lines.push((
                         Point3::new(x1, y1, z1),    // point 1
                         Point3::new(x2, y2, z2),    // point 2
-                        Point3::new(0.8, 0.8, 0.8), // color of edge
+                        Point3::new(0.9, 0.9, 0.9), // color of edge
                     ));
                     dist_list.push(d); // edge length
                 }
             }
         }
         self.add_connections(connects);
+        let readout_lines = self.make_readout_connects();
         // self.update_n_connects();
-        (connect_lines, dist_list)
+        (connect_lines, dist_list, readout_lines)
+    }
+
+    fn make_readout_connects(&mut self) -> Vec<(Point3<f32>, Point3<f32>, Point3<f32>)> {
+        let mut connect_lines: Vec<(Point3<f32>, Point3<f32>, Point3<f32>)> = Vec::new();
+        let count = self.n_total / self.n_clusters;
+        for cluster_idx in 0..self.n_clusters {
+            let readout_len = self.readouts[cluster_idx].len();
+            let mut readout_weights = DMatrix::<u32>::zeros(readout_len, count);
+            for readout_idx in 0..readout_len {
+                let r_loc = self.readouts[cluster_idx][readout_idx].get_loc();
+                let (x1, y1, z1) = (r_loc.x, r_loc.y, r_loc.z);
+                for neuron_idx in count * cluster_idx..count * (cluster_idx + 1) {
+                    let n_loc = self.neurons[neuron_idx].get_loc();
+                    let (x2, y2, z2) = (n_loc.x, n_loc.y, n_loc.z);
+                    connect_lines.push((
+                        Point3::new(x1, y1, z1),
+                        Point3::new(x2, y2, z2),
+                        Point3::new(227. / 255., 120. / 255., 105. / 255.),
+                    ));
+                    readout_weights[(readout_idx, neuron_idx % count)] = 1;
+                }
+            }
+            self.readout_weights.push(readout_weights);
+        }
+        connect_lines
+    }
+
+    pub fn get_readouts(&mut self) -> &mut Vec<Vec<Neuron>> {
+        &mut self.readouts
     }
 
     pub fn remove_disconnects(&mut self, window: &mut Window) {

@@ -7,8 +7,8 @@
 ///
 /// Description: We implement a neuron class with a visual representation.
 ///
-/// To do: 
-///        o Make readout clusters inside of bigger clusters. 
+/// To do:
+///        o Make readout clusters inside of bigger clusters.
 ///        o Take Input
 ///        o Convert input to voltage
 ///        o Getting liquid states
@@ -33,9 +33,11 @@ use machine::LSM;
 
 const AXIS_ON: bool = true; // toggles x, y, and z axis
 const LINES_ON: bool = true; // toggles edges between neurons
+const READOUT_LINES_ON: bool = true;
 const FANCY: bool = false; // toggles directional dotted lines (white to black)
 const YAW: bool = false; // toggles a rotation along the y axis
 const SP_ON: bool = true; // toggles each neuron
+const READOUT_ON: bool = true;
 const RM_DIS_N: bool = true; // determines whether we want to remove neurons with no connections
 
 fn render_lines(
@@ -43,14 +45,17 @@ fn render_lines(
     axis_len: f32,                                        // The length of the axis lines
     lines: &Vec<(Point3<f32>, Point3<f32>, Point3<f32>)>, // The edges between neurons
     dists: &Vec<f32>,
-    l: &mut LSM,    // List of neurons
+    readout_lines: &Vec<(Point3<f32>, Point3<f32>, Point3<f32>)>,
+    l: &mut LSM, // List of neurons
 ) {
     // Renders the edges between neurons as well as the lines of axis. \\
     let mut axis_on: bool = AXIS_ON;
     let mut lines_on: bool = LINES_ON;
+    let mut readout_lines_on: bool = READOUT_LINES_ON;
     let mut fancy: bool = FANCY;
     let mut yaw: bool = YAW;
     let mut sp_on: bool = SP_ON;
+    let mut readout_on: bool = READOUT_ON;
     let rm_dis_n = RM_DIS_N;
 
     // We want to start off at a point other than the origin so we don't have to
@@ -85,12 +90,18 @@ fn render_lines(
                     } else if key == Key::L {
                         lines_on = !lines_on;
                     // Turn on or off the yaw with Y
-                    } else if key == Key::Y {
+                    } else if key == Key::C {
+                        readout_lines_on = !readout_lines_on;
+                    }
+                    else if key == Key::Y {
                         yaw = !yaw;
                     } else if key == Key::S {
                         sp_on = !sp_on;
                     // sp_show(l);
-                    } else if key == Key::F {
+                    } else if key == Key::R {
+                        readout_on = !readout_on;
+                    }
+                    else if key == Key::F {
                         fancy = !fancy;
                     }
                 }
@@ -101,6 +112,11 @@ fn render_lines(
         if !sp_on {
             sp_show(l);
             sp_on = !sp_on;
+        }
+
+        if !readout_on {
+            readout_show(l);
+            readout_on = !readout_on;
         }
 
         if !fancy {
@@ -139,6 +155,11 @@ fn render_lines(
         // Draw edges between neurons
         if lines_on {
             for coords in lines.iter() {
+                window.draw_line(&coords.0, &coords.1, &coords.2);
+            }
+        }
+        if readout_lines_on {
+            for coords in readout_lines.iter() {
                 window.draw_line(&coords.0, &coords.1, &coords.2);
             }
         }
@@ -197,6 +218,16 @@ fn sp_show(l: &mut LSM) {
     for n_idx in 0..neurons.len() {
         // get_obj() gets a reference to the sphere in a neuron
         neurons[n_idx].get_obj().set_visible(!visible);
+    }
+}
+
+fn readout_show(l: &mut LSM) {
+    let readouts = l.get_readouts();
+    let visible: bool = readouts[0][0].get_obj().is_visible();
+    for cluster_idx in 0..readouts.len() {
+        for readout in readouts[cluster_idx].iter_mut() {
+            readout.get_obj().set_visible(!visible);
+        }
     }
 }
 
@@ -291,7 +322,8 @@ fn main() {
     // Important Variables \\
     let mut window = Window::new("Liquid State Machine"); // For graphics display
     window.set_light(Light::StickToCamera); // Graphics settings
-    let mut l1 = LSM::new(108, 216, 0.8);
+    const N_CLUSTERS: usize = 4; // The number of clusters
+    let mut l1 = LSM::new(108, N_CLUSTERS, 0.8);
     // PINK: Input: 27x4 = 108  => 27 for 3x3 pic. spiketrain
     // YELLOW: Output: 216/4 = 54/2 = 27 => 3x3 talk spike train
 
@@ -302,69 +334,64 @@ fn main() {
     // Colors are tetratic numbers from
     // https://www.colorhexa.com/78866b
 
-    // Cluster 1 \\
-    let mut n = 200; // The number of neurons in a single cluster
-    let mut var: f32 = 1.25; //1.75 // The variance in std. dev.
-    let r = 0.1; // The radius of a single sphere
-
     let c1 = Point3::new(2.5, 2.5, 3.0);
-    let color1 = (134./255., 121./255., 107./255.); 
-    // A cluster takes a window, a size, radius, center, variance, and color
-    l1.make_cluster(&mut window, n, r, &c1, var, color1);
-
-    n = 150;
-    var = 1.15;
     let c2 = Point3::new(-2.5, 2.5, -1.0);
-    // let color2 = (0.9453, 0.0938, 0.6641);
-    let color2 = (120./255., 134./255., 107./255.);
-    l1.make_cluster(&mut window, n, r, &c2, var, color2);
-
     let c3 = Point3::new(2.0, 1.5, -2.5);
-    // let color3 = (0.9453, 0.8203, 0.0938);
-    let color3 = (107./255., 120./255., 134./255.);
-    l1.make_cluster(&mut window, n, r, &c3, var, color3);
-
-    n = 100;
-    var = 1.075;
     let c4 = Point3::new(-1.2, -0.5, 2.5);
-    // let color4 = (0.2266, 0.875, 0.4023);
-    let color4 = (121./255., 107./255., 134./255.);
-    l1.make_cluster(&mut window, n, r, &c4, var, color4);
 
-    // Line Drawing \\
-    // Some of these may have been changed from spheres to neurons in name.
+    let color1 = (172. / 255., 222. / 255., 248. / 255.);
+    let color2 = (255. / 255., 148. / 255., 113. / 255.);
+    let color3 = (224. / 255., 187. / 255., 228. / 255.);
+    let color4 = (235. / 255., 212. / 255., 148. / 255.);
+
+    // Clusters \\
+    let n: usize = 600; // The total number of neurons in all clusters
+    let var: f32 = 1.15; //1.75 // The variance in std. dev.
+    let r: f32 = 0.1; // The radius of a single sphere
+    let cluster_types: [&str; N_CLUSTERS] = ["nothing", "talk", "run", "eat"];
+    let cluster_locs: [Point3<f32>; N_CLUSTERS] = [c1, c2, c3, c4];
+    let cluster_colors: [(f32, f32, f32); N_CLUSTERS] = [color1, color2, color3, color4];
+    let n_readouts: [usize; N_CLUSTERS] = [5, 4, 6, 2];
+
+    for idx in 0..N_CLUSTERS {
+        l1.make_cluster(
+            &mut window,
+            n / N_CLUSTERS,
+            r,
+            var,
+            &cluster_types[idx],
+            &cluster_locs[idx],
+            cluster_colors[idx],
+            n_readouts[idx],
+        );
+    }
 
     let n_len = l1.get_neurons().len();
 
-    // The paper from Yong Zhang et al initialized the grid with neurons equidistant from each other
-
-    // We found c = 0.2755 and lambda = 2. generate good results after playing around with it
-    // c: .25  lambda: 1.8
-    // let c = 0.75; //0.25//1.
     let lambda = 2.; //5.//10.
     let c: [f32; 5] = [0.45, 0.3, 0.6, 0.15, 0.1]; // [EE, EI, IE, II, Loop]
-    // let c: [f32; 5] = [0.25, 0.25, 0.25, 0.25, 0.1];
     let connects_data = l1.make_connects(c, lambda);
     let lines = connects_data.0;
     let dists = connects_data.1;
+    let readout_lines = connects_data.2;
 
     // Rendering \\
     let axis_len = 10.0;
-    render_lines(&mut window, axis_len, &lines, &dists, &mut l1);
+    render_lines(
+        &mut window,
+        axis_len,
+        &lines,
+        &dists,
+        &readout_lines,
+        &mut l1,
+    );
 
     // Refers back to how many neurons it used to have before they were removed
     // to figure out how many were removed
     let rm_n_count = n_len - l1.get_neurons().len();
 
     // Analysis \\
-    analysis(
-        l1.get_connections(),
-        &dists,
-        n_len,
-        c,
-        lambda,
-        rm_n_count,
-    );
+    analysis(l1.get_connections(), &dists, n_len, c, lambda, rm_n_count);
 }
 
 // end of file
