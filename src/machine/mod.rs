@@ -1,3 +1,4 @@
+use kiss3d::scene::SceneNode;
 use kiss3d::window::Window;
 
 use nalgebra::base::DMatrix;
@@ -14,32 +15,31 @@ use neuron::Neuron;
 
 pub struct LSM {
     // Big structure of clustered up neurons and connections
-    clusters: Vec<Vec<Neuron>>,
-    neurons: Vec<Neuron>,      // list of all neurons // has ownership of neurons
-    connections: DMatrix<u32>, // list of all connections (1 if connected, 0 if not)
-    n_total: usize,            // the number of total neurons
-    n_inputs: usize,           // the number of input neurons
-    n_clusters: usize,         // the number of cluster neurons
-    e_ratio: f32,              // 0-1 the percentage of exc neurons, all others are inhibitory
-    readouts: Vec<Vec<Neuron>>, // list of all clusters of read out neurons
-    readout_weights: Vec<DMatrix<u32>>, // list of all the plastic weights between readouts and resevoir
+    clusters: Vec<Vec<Neuron>>,         // A cluster is a set of neurons
+    neurons: Vec<Neuron>,               // List of all neurons // has ownership of neurons
+    connections: DMatrix<u32>,          // List of all connections (1 if connected, 0 if not)
+    n_total: usize,                     // The number of total neurons
+    n_inputs: usize,                    // The number of input neurons
+    n_clusters: usize,                  // The number of cluster neurons
+    e_ratio: f32,                       // 0-1 the ratio of excitatory to inhibitory neurons
+    readouts: Vec<Vec<Neuron>>,         // List of all clusters of read out neurons
+    readout_weights: Vec<DMatrix<u32>>, // List of all the plastic weights between readouts and reservoir
+    input_layer: Vec<Neuron>,           // Set of neurons that read input outside the reservoir
 }
 
 impl LSM {
     pub fn new(n_inputs: usize, n_clusters: usize, e_ratio: f32 /*n_readout: f32*/) -> LSM {
-        assert_eq!(0, n_inputs % n_clusters);
         Self {
-            // maybe number of clusters, radius of brain sphere, etc
             clusters: Vec::new(),
-            n_clusters: n_clusters,
             neurons: Vec::new(),
             connections: DMatrix::<u32>::zeros(0, 0), // Starts empty because you can't fill until later
             n_total: n_inputs,                        // at least n_inputs + n_outputs
             n_inputs: n_inputs,
+            n_clusters: n_clusters,
             e_ratio: e_ratio,
             readouts: Vec::new(),
             readout_weights: Vec::new(),
-            // i_s_factor: 1., //mV
+            input_layer: Vec::new(),
         }
     }
 
@@ -59,9 +59,12 @@ impl LSM {
             println!("No neurons.");
             return;
         }
-        // Creates a cluster of n (r,g,b)-colored, radius sized neurons around a   \\
-        // center at loc, distributed around the center with variance var.         \\
-        // Returns a list of spheres in a cluster.                                 \\
+        // Creates a cluster of n (r,g,b)-colored, radius sized neurons around a
+        // center at loc, distributed around the center with variance var.
+        // Also creates the readout set associated with each cluster and assigns
+        // the neurons in it to be input randomly. At the end, the cluster is
+        // stored in a cluster list, and its neurons are stored in an overall
+        // neurons list variable.
         let mut neurons: Vec<Neuron> = Vec::new();
         let seed = [1_u8; 32]; // our seed, the 1s can be changed later
                                // let mut rng = thread_rng(); // something like that
@@ -122,12 +125,12 @@ impl LSM {
         // in this struct 'neurons' list.
         let mut liq_idx: Vec<usize> = (0..neurons.len()).collect();
 
-        for _ in 0..(self.n_inputs / self.n_clusters) {
+        for _ in 0..self.n_inputs {
             // choose chooses a random element of the list.
             let in_idx: usize = *liq_idx.choose(&mut rng).unwrap();
             // Set to input, change the color, and remove that index so that we
             // get unique input neurons
-            neurons[in_idx].set_spec("in");
+            neurons[in_idx].set_spec("liq_in");
             neurons[in_idx].get_obj().set_color(0.9453, 0.0938, 0.6641);
             // the index of in_idx in liq_idx
             let idx = liq_idx.iter().position(|&r| r == in_idx).unwrap();
@@ -137,6 +140,7 @@ impl LSM {
 
     fn assign_nt(&mut self) {
         assert_eq!(true, self.e_ratio <= 1.);
+        // For a small LSM (2 nodes), make them both excitatory
         if self.n_total < 2 {
             for n in self.neurons.iter_mut() {
                 n.set_nt("exc");
@@ -190,12 +194,15 @@ impl LSM {
 
     fn make_readouts(
         &mut self,
-        window: &mut Window,
-        n_readouts: usize,
-        loc: &Point3<f32>,
-        radius: f32,
-        cluster: &str,
+        window: &mut Window, // Window we will draw on
+        n_readouts: usize,   // Total number of readout neurons that we want
+        loc: &Point3<f32>,   // The center of the Cluster
+        radius: f32,         // The radius of each readout neuron
+        cluster: &str,       // The cluster type
     ) -> Vec<Neuron> {
+        // Returns a set of neurons.
+
+        // Makes a \\
         let mut readouts: Vec<Neuron> = Vec::new();
         for idx in 0..n_readouts {
             let x: f32 = loc.x * 2.5;
@@ -204,7 +211,7 @@ impl LSM {
 
             let t = Translation3::new(x, y + n_readouts as f32 / 2. - idx as f32, z);
 
-            let neuron: Neuron = Neuron::new(window.add_sphere(radius), "out", cluster);
+            let neuron: Neuron = Neuron::new(window.add_sphere(radius), "readout", cluster);
             readouts.push(neuron);
 
             readouts[idx].get_obj().append_translation(&t);
@@ -215,6 +222,7 @@ impl LSM {
 
     pub fn make_connects(
         &mut self,
+        window: &mut Window,
         c: [f32; 5], // This and lambda are hyper parameters for connect_chance function.
         lambda: f32,
     ) -> (
@@ -229,6 +237,7 @@ impl LSM {
         // edge.
         // The second vector is a list of how long the edges are.
         //self.assign_input();
+        self.set_input_weights();
         self.assign_nt();
         let n_len = self.n_total;
         let mut connects = DMatrix::<u32>::zeros(n_len, n_len);
@@ -285,8 +294,8 @@ impl LSM {
                 // the connection going the other way is on
                 if connects[(idx2, idx1)] == 1 {
                     c_idx = 4; // a loop
-                } else if self.neurons[idx2].get_spec() == &"in".to_string()
-                    && self.neurons[idx1].get_spec() != &"in".to_string()
+                } else if self.neurons[idx2].get_spec() == &"liq_in".to_string()
+                    && self.neurons[idx1].get_spec() != &"liq_in".to_string()
                 {
                     // if input neuron
                     c_idx = 4;
@@ -319,29 +328,66 @@ impl LSM {
                 }
             }
         }
+        self.update_pre_syn_connects(&connects);
         self.add_connections(connects);
         let readout_lines = self.make_readout_connects();
+        self.make_input_layer(window);
+        self.make_input_connects();
         // self.update_n_connects();
         (connect_lines, dist_list, readout_lines)
     }
 
+    fn update_pre_syn_connects(&mut self, connects: &DMatrix<u32>) {
+        // Updates each neuron's pre-synaptic connections
+
+        // Basic algorithm:
+        // Go through all the neurons, (column wise in the connects DMatrix)
+        // For each neuron connecting to it, add that number to a list (that is
+        // representing a neuron being connected to it)
+
+        // We know that connects is n_total x n_total
+        for col in 0..self.n_total {
+            let mut pre_connects_idx: Vec<usize> = Vec::new();
+            for row in 0..self.n_total {
+                // This order of index-ing results in getting pre-synaptic connects
+                // This row connects to col (col is our current neuron)
+                if connects[(row, col)] == 1 {
+                    pre_connects_idx.push(row);
+                }
+            }
+            self.neurons[col].set_pre_syn_connects(pre_connects_idx);
+        }
+    }
+
     fn make_readout_connects(&mut self) -> Vec<(Point3<f32>, Point3<f32>, Point3<f32>)> {
+        // connect_lines: <(point 1, point 2, color), ... >
         let mut connect_lines: Vec<(Point3<f32>, Point3<f32>, Point3<f32>)> = Vec::new();
+        // Number of neurons in one cluster, assuming all clusters are equally sized
         let count = self.n_total / self.n_clusters;
+        // For all clusters..
         for cluster_idx in 0..self.n_clusters {
+            // Number of readout neurons in a given cluster
             let readout_len = self.readouts[cluster_idx].len();
+            // Each column is all the connections for one readout neuron.
             let mut readout_weights = DMatrix::<u32>::zeros(readout_len, count);
+            // For all readout neurons in a readout set
             for readout_idx in 0..readout_len {
                 let r_loc = self.readouts[cluster_idx][readout_idx].get_loc();
                 let (x1, y1, z1) = (r_loc.x, r_loc.y, r_loc.z);
+
+                // Steps by the number of neurons in a cluster
+                // For each neuron, save its location
                 for neuron_idx in count * cluster_idx..count * (cluster_idx + 1) {
                     let n_loc = self.neurons[neuron_idx].get_loc();
                     let (x2, y2, z2) = (n_loc.x, n_loc.y, n_loc.z);
                     connect_lines.push((
                         Point3::new(x1, y1, z1),
                         Point3::new(x2, y2, z2),
-                        Point3::new(227. / 255., 120. / 255., 105. / 255.),
+                        Point3::new(227. / 255., 120. / 255., 105. / 255.), // light pink
                     ));
+
+                    // 'The neuron_idx % count' is to sort by cluster
+                    // All readout weights are set to 1 at first
                     readout_weights[(readout_idx, neuron_idx % count)] = 1;
                 }
             }
@@ -411,20 +457,53 @@ impl LSM {
         ((x2 - x1).powf(2.) + (y2 - y1).powf(2.) + (z2 - z1).powf(2.)).sqrt()
     }
 
-    // The list of connections. 1 if there is a connection, 0 if not
-    // fn update_n_connects(&mut self) {
-    //     // This function updates the neuron's connections list using the
-    //     // connections matrix we made in make_connects. \\
-    //     let n_len = self.neurons.len();
-    //     for col in 0..n_len {
-    //         let mut n_connect: Vec<u32> = Vec::new();
-    //         for row in 0..n_len {
-    //             n_connect.push(self.connections[(col, row)]);
-    //         }
+    fn _comments() {
+        /*
+        Brainstorming:
+        We initialize an LSM with a few clusters.
 
-    //         self.neurons[col].set_connects(n_connect);
-    //     }
-    // }
+
+        We assume each neuron knows:
+        o its pre-synaptic neurons
+        o its pre-synaptic weights
+        Input we will manipulate from a file
+        o from txt file
+        o goes to the outside input layer neurons
+        o For each spiketrain, if it's 1, put in the index into the j list
+        o It should be manually connected to some reservoir input neurons
+                e.g.
+                Say we have outside input layer neuron n1
+                There are 5 of these n1 ... n5
+                There are 10 reservoir input neurons.
+                Then, lets say each outside input is connected to EVERY inside input.
+                An example matrix is
+                10 x 5 matrix containing just values between -8 and 8
+
+                Lets say each outside input is only connected to 4 inside inputs.
+                Then, the matrix is
+                10 x 5 matrix with each column having 4 values between -8 and 8,
+                other 6 have zeros
+
+        Input neurons (in the reservoir)
+        Reservoir business
+        Readout neurons
+
+
+        The first run through the reservoir
+        We read the input txt file and put it through special outside input layer
+        neurons (not really neurons). What is important is that we fill initial
+        weight values and spike times.
+
+        Say we have read the input, and we have a list of spike trains. Then
+        for each spike train, we multiply it by some weight (-8 to 8) and those are
+        our weights that we will put into the reservoir.
+        The spike times will be tracked thusly:
+        If the spike reads 1, push the index of that value into the times list.
+
+        ^ Where should this happen? Right after the clusters are made because
+        that's when we want the LSM to run.
+        */
+    }
 
     fn add_connections(&mut self, connects: DMatrix<u32>) {
         self.connections = connects;
@@ -432,5 +511,204 @@ impl LSM {
 
     pub fn get_connections(&mut self) -> &mut DMatrix<u32> {
         &mut self.connections
+    }
+
+    fn make_input_layer(&mut self, window: &mut Window) {
+        // Creates neurons that will feed into the reservoir's input
+        // How many? There will be n_inputs of them
+        // Where are they located? Somewhere away from clusters.
+        // What do they do? This function doesn't know.
+        let mut sp = window.add_sphere(0.1);
+        sp.set_visible(false);
+        let mut empty = SceneNode::new_empty();
+        empty.set_visible(false);
+        for _ in 0..self.n_inputs {
+            self.input_layer
+                .push(Neuron::new(empty.clone(), "in", "input layer"));
+        }
+    }
+
+    fn set_input_weights(&mut self) {
+        // Sets the weight of input for one neuron to be a random number from -8 to 8
+        let seed = [5; 32];
+        let mut rng = StdRng::from_seed(seed);
+        // let weight = 16. * rng.gen::<f32>() - 8.;
+
+        for neuron in self.get_neurons().iter_mut() {
+            if neuron.get_spec() == &"liq_in".to_string() {
+                neuron.set_input_weight(16. * rng.gen::<f32>() - 8.);
+            }
+        }
+    }
+
+    fn make_input_connects(&mut self) {
+        // Connects the outside input layer to an input neuron in each cluster
+        // in the reservoir
+
+        // Updates a neuron classified as "liq_in"'s input_connect attribute
+        // This represents the index of that neuron in LSM input_layer vector
+
+        // We have: o all neurons in reservoir
+        //          o all neurons in input layer
+        //          o all input neurons in reservoir
+        //
+        // We want  o to connect one input layer neuron to one reservoir input
+        //            neuron in each cluster
+        //          o store in the connected neuron the index of this new pre-synaptic
+        //            connection
+
+        let count: usize = self.n_total / self.n_clusters;
+        for cluster in 0..self.n_clusters {
+            let mut input_idx: usize = 0;
+            for neuron_idx in count * cluster..count * (cluster + 1) {
+                // Connect an input layer neuron to one reservoir input in each cluster
+                if self.neurons[neuron_idx].get_spec() == &"liq_in".to_string() {
+                    self.neurons[neuron_idx].set_input_connect(input_idx);
+                    input_idx += 1;
+                }
+            }
+        }
+    }
+
+    fn set_spike_times(&mut self, input: &Vec<Vec<u32>>) {
+        assert_eq!(self.n_inputs, input.len());
+        // For each liq_in neuron's pre-synaptic connects, set the
+        // spike_times array to be the index of 1's in the input vector
+
+        // We know input is as long as the n_inputs.
+        // For all the inputs in the reservoir
+        for input_idx in 0..self.n_inputs {
+            // Go through input spike, if there is a 1, we put the index that we found
+            // it in.
+            let mut curr_spike_times: Vec<u32> = Vec::new();
+            for (key, item) in input[input_idx].iter().enumerate() {
+                if item == &1 {
+                    curr_spike_times.push(key as u32);
+                }
+            }
+            self.input_layer[input_idx].set_spike_times(curr_spike_times.clone());
+        }
+    }
+
+    fn delta(&self, n: u32) -> f32 {
+        // Dirac delta function
+        // A spike helper function
+        // It outputs 1 only at 0
+        if n == 0 {
+            return 1.;
+        }
+        0.
+    }
+
+    fn heaviside(&self, n: u32) -> f32 {
+        // Heaviside step function
+        // When n < 0, H(n) = 0
+        //      n > 0, H(n) = 1
+        //      n = 0, H is undefined, but we put 1
+        if n < 0 {
+            return 0.;
+        }
+        1.
+    }
+
+    fn s(
+        &self,
+        model: &str,
+        curr_t: u32,
+        t_spike: u32,
+        delay: u32,
+        tau_s1: u32,
+        tau_s2: u32,
+    ) -> f32 {
+        if model == "static" {
+            return self.delta(curr_t - t_spike - delay);
+        } else if model == "first order" {
+            let exponent = ((curr_t - t_spike - delay) as f32 * -1.) / (tau_s1 as f32);
+            return (1. / tau_s1 as f32)
+                * f32::exp(exponent)
+                * self.heaviside(curr_t - t_spike - delay);
+        } else if model == "second order" {
+            // returns two different things
+            // one with exponent1 and the other with exponent2
+            let exponent1: f32 = ((curr_t - t_spike - delay) as f32 * -1.) / (tau_s1 as f32);
+            let exponent2: f32 = ((curr_t - t_spike - delay) as f32 * -1.) / (tau_s2 as f32);
+            let denominator: f32 = (tau_s1 - tau_s2) as f32;
+            let h = self.heaviside(curr_t - t_spike - delay);
+            let part1 = f32::exp(exponent1) * h / denominator;
+            let part2 = f32::exp(exponent2) * h / denominator;
+            // In equation 21, if we factor out w, we can just
+            // subtract the two parts together instead of calculate
+            // two separately
+            return part1 - part2;
+        }
+        panic!("Model was chosen incorrectly");
+    }
+
+    pub fn run(
+        &mut self,
+        input: &Vec<Vec<u32>>,
+        model: &str,
+        delay: u32,
+        tau_s1: u32,
+        tau_s2: u32,
+    ) {
+        // Updates voltage connections for all neurons in the LSM.
+        // Implementation of Equation 14 in Zhang et al 2015
+
+        /* 2 Different kinds of running:
+            o Reservoir input neurons
+            o Liquid to liquid
+           First time, we want to only run for reservoir inputs.
+           New voltage = Old voltage - Old voltage / Time constant for membrane
+                        + the sum of weights if the times are close
+        */
+
+        self.set_spike_times(input);
+
+        let n_time_steps = input[0].len();
+
+        // For every time step in all the time steps
+        for t in 0..n_time_steps {
+            // For every post synaptic neuron in the liquid
+            for n_idx in 0..self.neurons.len() {
+                // If the neuron is a reservoir input
+                if self.neurons[n_idx].get_spec() == &"liq_in".to_string() {
+                    // We have it already so that the reservoir input knows
+                    // which input layer neuron it's connected to
+                    // We want to change the current neuron's voltage.
+
+                    // let curr_v = self.neurons[n_idx].get_voltage();
+                    // let tau_m  = 4; // for static model
+                    // let weight = ; // idk how to get it, we should already
+                    // have it somewhere
+                    // let t_ij = curr_spike_time; // we should loop through spikes
+                    // let d_i = 2; // some constant delay value
+                    // let diff_eq: f32 = curr_v + curr_v/tau_m + weight*
+                    // delta(t - t_ij - d_i) - spike_time
+                    // self.s(t, );
+                    // self.neurons[n_idx].set_voltage(diff_eq);
+                }
+
+                // The indices of the pre-syn. connections self.neurons[n_idx]
+                // has with the rest of the LSM
+                let pre_syn_connects = self.neurons[n_idx].get_pre_syn_connects();
+                // Loop through all the pre synaptic neuron indices
+                for connect_idx_idx in 0..pre_syn_connects.len() {
+                    // For each pre synaptic neuron, loop through all its spikes
+
+                    // pre_syn_connects[connect_idx_idx] is the index of one of
+                    // the pre synaptic connections of self.neurons[n_idx]
+
+                    // spike_time is a time of one of the spikes from one of the
+                    // pre synaptic neurons
+                    for spike_time in self.neurons[pre_syn_connects[connect_idx_idx]]
+                        .get_spike_times()
+                        .iter()
+                    {
+                        self.s(model, t as u32, spike_time.clone(), delay, tau_s1, tau_s2);
+                    }
+                }
+            }
+        }
     }
 }

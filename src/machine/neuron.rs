@@ -6,30 +6,39 @@ use nalgebra::base::Vector3;
 use nalgebra::geometry::Translation3;
 use std::fmt;
 
-static TYPES: [&str; 3] = ["in", "liq", "out"]; // The three types of neurons in our LSM
+static TYPES: [&str; 4] = ["in", "liq_in", "liq", "readout"]; // The three types of neurons in our LSM
 pub static NTS: [&str; 2] = ["exc", "inh"]; // types of neurotransmitters
 
 #[derive(Clone)]
 pub struct Neuron {
-    // maybe it should know which cluster it belongs to? and cluster could be a
-    obj: SceneNode,     // a sphere design associated with the neuron
+    obj: SceneNode, // a sphere design associated with the neuron
     // connects: Vec<u32>, // 1's and 0's representing a connection for 1 and not for 0
-    spec: String,       // specialization
-    nt: String,         // neurotransmitter type, from the choice of NTS
-    cluster: String,
-    loc: Vector3<f32>,
-    // input: Vec<u32>,    // a spike train. 
-                        // v: f32, // voltage input
-                        // theta: f32, // threshold to activate
-                        // v_rest: f32, // resting voltage
-                        // n_t : String,
-                        // read_out: bool,
+    spec: String,                 // Specialization (either input, output, or liquid)
+    nt: String,                   // Neurotransmitter type, excitatory or inhibitory
+    cluster: String,              // The cluster self belongs to. Usually a task name.
+    loc: Vector3<f32>,            // The location of the sphere associated with self
+    input_weight: f32,            // The weight at which spike trains are read
+    v: f32,                       // Voltage of a neuron (mV)
+    v_th: f32,                    // Voltage threshold to activate (mV)
+    v_rest: f32,                  // The resting voltage (mV)
+    refrac_period: u32,           // The time (in ms) it takes to get back to resting
+    pre_syn_connects: Vec<usize>, // Indices of pre-synaptic neurons
+    spike_times: Vec<u32>,      // The times at which a spike happens (an index of a 1 in a spike train) 
+    input_connect: usize,         // The index of the input layer neuron this is connected to. (only if "liq_in")  
+    // pre: Vec<Neuron>, presynaptic neurons
+    // pre_weights: DMatrix<Some Size>, weights of presynaptic neurons (has to
+    // do with excitatory / inhibitoryness)
+    // spikes: Vec<f32>, list of spike times
+
+    // time constants for first order / second order dynamics
+    // tau_m: u32, time constant for membrane potential (ms)
+    // tau_c: u32, time constant for calcium level (ms)
 }
 
 impl fmt::Display for Neuron {
     // Printing a Neuron \\
     // Formatter: '_ is a lifetime argument making it so that fmt lasts as long
-    // as self 
+    // as self
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "Neuron: {} and {}", self.get_spec(), self.get_nt())
     }
@@ -48,26 +57,28 @@ impl Neuron {
             obj: obj,
             // connects: connects,
             spec: spec.to_string(),
-            // v: v,
-            // theta: theta,
-            // v_rest: v_rest
             // n_t: n_t
             // input: input,
             // read_out: read_out
             nt: "".to_string(), // neither exc nor inh
             cluster: cluster.to_string(),
             loc: Vector3::<f32>::new(0., 0., 0.),
-
+            input_weight: 0.,
+            v: 0.,
+            v_th: 20.,
+            v_rest: 0.,
+            refrac_period: 2,
+            pre_syn_connects: Vec::new(),
+            spike_times: Vec::new(),
+            input_connect: 0,
+            // tau_m: 32.,
+            // tau_c: 64.,
         }
     }
 
     pub fn get_obj(&mut self) -> &mut SceneNode {
         &mut self.obj
     }
-
-    // pub fn set_connects(&mut self, connects: Vec<u32>) {
-    //     self.connects = connects;
-    // }
 
     pub fn set_spec(&mut self, id: &str) {
         assert!(true, TYPES.contains(&id));
@@ -87,15 +98,66 @@ impl Neuron {
         self.nt = nt.to_string();
     }
 
-    // pub fn get_cluster(&self) -> &String{
-    //     &self.cluster
-    // }
-
     pub fn set_loc(&mut self, loc: &Translation3<f32>) {
         self.loc = loc.vector;
     }
 
-    pub fn get_loc(&self) -> &Vector3::<f32> {
+    pub fn get_loc(&self) -> &Vector3<f32> {
+        // & so we don't move it 
         &self.loc
+    }
+
+    pub fn set_input_weight(&mut self, weight: f32) {
+        // moving value
+        self.input_weight = weight;
+    }
+
+    pub fn set_pre_syn_connects(&mut self, indices: Vec<usize>) {
+        // moving value
+        self.pre_syn_connects = indices;
+    }
+
+    pub fn get_pre_syn_connects(&self) -> &Vec<usize> {
+        &self.pre_syn_connects
+    }
+
+    pub fn get_spike_times(&self) -> &Vec<u32> {
+        // & so we don't move it 
+        &self.spike_times
+    }
+
+    pub fn set_spike_times(&mut self, spike_times: Vec<u32>) {
+        // moving value 
+        self.spike_times = spike_times;
+    }
+
+    // pub fn run(&mut self) {
+    //     // Takes a spike train and then compares voltages to threshold
+    //     // MAYBE takes a time too!
+    //     // ...
+    //     // Somewhere in here, we do
+    //     // self.spikes.push(time) but only if neuron fired / passed threshold
+
+    //     // Based on current voltage, update it using this differential equation
+    //     // (14) from
+    //     // A Digital Liquid State Machine With Biologically Inspired Learning and Its Application to Speech Recognition - Zhang
+    // }
+
+    pub fn set_input_connect(&mut self, input_idx: usize) {
+        self.input_connect = input_idx;
+    }
+
+    pub fn get_input_connect(&self) -> usize {
+        // We are not moving it, so we clone
+        self.input_connect.clone()
+    }
+
+    pub fn get_voltage(&self) -> f32 {
+        self.v.clone()
+    }
+
+    pub fn set_voltage(&self, voltage: f32) {
+        // Moves the voltage value
+        self.v = voltage;
     }
 }
