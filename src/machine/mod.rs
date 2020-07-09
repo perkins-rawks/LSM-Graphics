@@ -13,6 +13,9 @@ use rand_distr::{Distribution, Normal};
 mod neuron;
 use neuron::Neuron;
 
+use std::fs::File;
+use std::io::Write;
+
 pub struct LSM {
     // Big structure of clustered up neurons and connections
     clusters: Vec<Vec<Neuron>>,         // A cluster is a set of neurons
@@ -25,6 +28,8 @@ pub struct LSM {
     readouts: Vec<Vec<Neuron>>,         // List of all clusters of read out neurons
     readout_weights: Vec<DMatrix<u32>>, // List of all the plastic weights between readouts and reservoir
     input_layer: Vec<Neuron>,           // Set of neurons that read input outside the reservoir
+    tau_m: u32,                         // time constant for membrane potential (ms)
+    liq_weights: [i32; 4],              // Fixed synaptic weights in the reservoir
 }
 
 impl LSM {
@@ -40,6 +45,8 @@ impl LSM {
             readouts: Vec::new(),
             readout_weights: Vec::new(),
             input_layer: Vec::new(),
+            tau_m: 32,
+            liq_weights: [3, 6, -2, -2], // [EE, EI, IE, II]
         }
     }
 
@@ -104,9 +111,19 @@ impl LSM {
 
     fn unpack(&mut self) {
         // Puts all the neurons in the cluster into a vector of neurons. \\
+        // Also updates node identifications to be their index in the neurons list.
         // The last neuron list in clusters
-        for neuron in self.clusters[self.clusters.len() - 1].iter() {
+        for (id, neuron) in self.clusters[self.clusters.len() - 1].iter().enumerate() {
             self.neurons.push(neuron.clone()); // .clone() to avoid moving problems
+
+            // Setting ID based on previous ID
+            if id == 0 && self.clusters.len() == 1 {
+                self.neurons[id].set_id(0); // base case
+            } else {
+                let last_idx = self.neurons.len() - 1;
+                let prev_id: usize = self.neurons[last_idx - 1].get_id();
+                self.neurons[last_idx].set_id(prev_id + 1);
+            }
         }
         self.n_total = self.neurons.len(); // update total neuron count
     }
@@ -164,6 +181,7 @@ impl LSM {
             let exc_idx: usize = *liq_idx.choose(&mut rng).unwrap();
             // Since we picked out an index, we can use that value to set the type
             self.neurons[exc_idx].set_nt("exc");
+            self.neurons[exc_idx].set_second_tau(4, 8);
             // Find the idx at which it chose that index and remove it
             let idx = liq_idx.iter().position(|&r| r == exc_idx).unwrap();
             liq_idx.remove(idx);
@@ -172,7 +190,7 @@ impl LSM {
         for _ in 0..n_inh {
             let inh_idx: usize = *liq_idx.choose(&mut rng).unwrap();
             self.neurons[inh_idx].set_nt("inh");
-
+            self.neurons[inh_idx].set_second_tau(4, 2);
             let idx = liq_idx.iter().position(|&r| r == inh_idx).unwrap();
             liq_idx.remove(idx);
         }
@@ -401,8 +419,6 @@ impl LSM {
     }
 
     pub fn remove_disconnects(&mut self, window: &mut Window) {
-        // Change
-
         // Removes neurons that are not connected to any other neurons \\
         // You can collect and re-add these in
         // for idx in 0..self.neurons.len() {
@@ -529,14 +545,15 @@ impl LSM {
     }
 
     fn set_input_weights(&mut self) {
-        // Sets the weight of input for one neuron to be a random number from -8 to 8
-        let seed = [5; 32];
+        // Sets the weight of input for one neuron to be either -8 or 8
+        // FROM Zhang et al 2015 pg 2645
+        let seed = [8; 32];
         let mut rng = StdRng::from_seed(seed);
-        // let weight = 16. * rng.gen::<f32>() - 8.;
 
+        let weights = [-8, 8];
         for neuron in self.get_neurons().iter_mut() {
             if neuron.get_spec() == &"liq_in".to_string() {
-                neuron.set_input_weight(16. * rng.gen::<f32>() - 8.);
+                neuron.set_input_weight(weights.choose(&mut rng).unwrap().clone());
             }
         }
     }
@@ -590,7 +607,7 @@ impl LSM {
         }
     }
 
-    fn delta(&self, n: u32) -> f32 {
+    fn delta(&self, n: i32) -> f32 {
         // Dirac delta function
         // A spike helper function
         // It outputs 1 only at 0
@@ -600,7 +617,7 @@ impl LSM {
         0.
     }
 
-    fn heaviside(&self, n: u32) -> f32 {
+    fn heaviside(&self, n: i32) -> f32 {
         // Heaviside step function
         // When n < 0, H(n) = 0
         //      n > 0, H(n) = 1
@@ -611,20 +628,21 @@ impl LSM {
         1.
     }
 
-    fn s(
+    fn liq_response(
         &self,
         model: &str,
-        curr_t: u32,
-        t_spike: u32,
-        delay: u32,
+        curr_t: i32,
+        t_spike: i32,
+        delay: i32,
+        first_tau: u32,
         tau_s1: u32,
-        tau_s2: u32,
+        tau_s2: u32
     ) -> f32 {
         if model == "static" {
             return self.delta(curr_t - t_spike - delay);
         } else if model == "first order" {
-            let exponent = ((curr_t - t_spike - delay) as f32 * -1.) / (tau_s1 as f32);
-            return (1. / tau_s1 as f32)
+            let exponent = ((curr_t - t_spike - delay) as f32 * -1.) / (first_tau as f32);
+            return (1. / first_tau as f32)
                 * f32::exp(exponent)
                 * self.heaviside(curr_t - t_spike - delay);
         } else if model == "second order" {
@@ -632,7 +650,7 @@ impl LSM {
             // one with exponent1 and the other with exponent2
             let exponent1: f32 = ((curr_t - t_spike - delay) as f32 * -1.) / (tau_s1 as f32);
             let exponent2: f32 = ((curr_t - t_spike - delay) as f32 * -1.) / (tau_s2 as f32);
-            let denominator: f32 = (tau_s1 - tau_s2) as f32;
+            let denominator: f32 = tau_s1 as f32 - tau_s2 as f32;
             let h = self.heaviside(curr_t - t_spike - delay);
             let part1 = f32::exp(exponent1) * h / denominator;
             let part2 = f32::exp(exponent2) * h / denominator;
@@ -648,67 +666,169 @@ impl LSM {
         &mut self,
         input: &Vec<Vec<u32>>,
         model: &str,
-        delay: u32,
-        tau_s1: u32,
-        tau_s2: u32,
+        delay: i32,
+        first_tau: u32,
     ) {
         // Updates voltage connections for all neurons in the LSM.
-        // Implementation of Equation 14 in Zhang et al 2015
+        // Implementation of Equation 14/20/21 in Zhang et al 2015
 
-        /* 2 Different kinds of running:
-            o Reservoir input neurons
-            o Liquid to liquid
-           First time, we want to only run for reservoir inputs.
-           New voltage = Old voltage - Old voltage / Time constant for membrane
-                        + the sum of weights if the times are close
+        /* 
+          2 Different kinds of running:
+            o Input layer to reservoir input neurons
+            o Any liquid to liquid
         */
+        
+
+        let mut f = File::create("output.txt").expect("Unable to create a file");
 
         self.set_spike_times(input);
 
-        let n_time_steps = input[0].len();
+        let n_time_steps: usize = input[0].len();
 
         // For every time step in all the time steps
-        for t in 0..n_time_steps {
+        for t in 0..(n_time_steps + delay as usize + 25) {
             // For every post synaptic neuron in the liquid
             for n_idx in 0..self.neurons.len() {
+                // If the neuron is in time out, then skip and update timeout
+                // Using self.neurons[n_idx] instead of curr_neuron because of
+                // differing mutability calls with get and update methods.
+                if self.neurons[n_idx].get_time_out() > 0 {
+                    self.neurons[n_idx].update_time_out();
+                    continue;
+                }
+
+                let curr_neuron = &self.neurons[n_idx];
+                // The total change in curr_neuron's voltage
+                let mut delta_v: f32 = -curr_neuron.get_voltage() / (self.tau_m as f32);
+
+
                 // If the neuron is a reservoir input
-                if self.neurons[n_idx].get_spec() == &"liq_in".to_string() {
+                if curr_neuron.get_spec() == &"liq_in".to_string() {
                     // We have it already so that the reservoir input knows
                     // which input layer neuron it's connected to
                     // We want to change the current neuron's voltage.
 
-                    // let curr_v = self.neurons[n_idx].get_voltage();
-                    // let tau_m  = 4; // for static model
-                    // let weight = ; // idk how to get it, we should already
-                    // have it somewhere
-                    // let t_ij = curr_spike_time; // we should loop through spikes
-                    // let d_i = 2; // some constant delay value
-                    // let diff_eq: f32 = curr_v + curr_v/tau_m + weight*
-                    // delta(t - t_ij - d_i) - spike_time
-                    // self.s(t, );
-                    // self.neurons[n_idx].set_voltage(diff_eq);
+                    // For the curr_neuron (liq_in), it gets the list of spikes
+                    // coming from the input layer
+                    let spike_times: &Vec<u32> =
+                        self.input_layer[curr_neuron.get_input_connect()].get_spike_times();
+                    // Looks through all the spikes of the input and calculates
+                    // how the voltage will change
+                    for spike_time in spike_times.iter() {
+                        let weight: i32 = curr_neuron.get_input_weight();
+                        let model_calc: f32;
+                        if curr_neuron.get_input_weight() == 8 {
+                            // excitatory synapse
+                            model_calc = self.liq_response(
+                                model,
+                                t as i32,
+                                *spike_time as i32,
+                                delay,
+                                first_tau, // first order tau
+                                4, // values from Zhang et al paper for second order tau values
+                                8
+                            );
+                        }
+                        else {
+                            // inhibitory synapse
+                            model_calc = self.liq_response(
+                                model,
+                                t as i32,
+                                *spike_time as i32,
+                                delay,
+                                first_tau,
+                                4,
+                                2
+                            );
+                        }
+                        delta_v += (weight as f32) * model_calc;
+                    }
                 }
 
+                let tau_s1 = curr_neuron.get_second_tau()[0];
+                let tau_s2 = curr_neuron.get_second_tau()[1];
                 // The indices of the pre-syn. connections self.neurons[n_idx]
                 // has with the rest of the LSM
-                let pre_syn_connects = self.neurons[n_idx].get_pre_syn_connects();
+                let pre_syn_connects: &Vec<usize> = curr_neuron.get_pre_syn_connects();
                 // Loop through all the pre synaptic neuron indices
                 for connect_idx_idx in 0..pre_syn_connects.len() {
                     // For each pre synaptic neuron, loop through all its spikes
 
+                    // The pre synaptic neuron that we are currently looking at
                     // pre_syn_connects[connect_idx_idx] is the index of one of
-                    // the pre synaptic connections of self.neurons[n_idx]
+                    // the pre synaptic connections of curr_neuron
+                    let pre_syn_neuron: &Neuron = &self.neurons[pre_syn_connects[connect_idx_idx]];
+                    let spike_times: &Vec<u32> = pre_syn_neuron.get_spike_times();
+                    // Looks through all the spikes of the pre-syn neuron and calculates
+                    // how the voltage will change
+                    for spike_time in spike_times.iter() {
+                        // The weight is depended on the neurotransmitter that each pre and
+                        // post synaptic neurons puts out
+                        let weight: i32; // Weird warnings. Says it doesn't need to be mut.
+                                         /* EE */
+                        if pre_syn_neuron.get_nt() == &"exc".to_string()
+                            && curr_neuron.get_nt() == &"exc".to_string()
+                        {
+                            weight = self.liq_weights[0];
+                        }
+                        /* EI */
+                        else if pre_syn_neuron.get_nt() == &"exc".to_string()
+                            && curr_neuron.get_nt() == &"inh".to_string()
+                        {
+                            weight = self.liq_weights[1];
+                        }
+                        /* IE */
+                        else if pre_syn_neuron.get_nt() == &"inh".to_string()
+                            && curr_neuron.get_nt() == &"exc".to_string()
+                        {
+                            weight = self.liq_weights[2];
+                        }
+                        /* II */
+                        else {
+                            weight = self.liq_weights[3];
+                        }
 
-                    // spike_time is a time of one of the spikes from one of the
-                    // pre synaptic neurons
-                    for spike_time in self.neurons[pre_syn_connects[connect_idx_idx]]
-                        .get_spike_times()
-                        .iter()
-                    {
-                        self.s(model, t as u32, spike_time.clone(), delay, tau_s1, tau_s2);
+                        let model_calc = self.liq_response(
+                            model,
+                            t as i32,
+                            *spike_time as i32,
+                            delay,
+                            first_tau,
+                            tau_s1,
+                            tau_s2
+                        );
+                        delta_v += (weight as f32) * model_calc;
+                    }
+                }
+                self.neurons[n_idx].update_voltage(delta_v);
+                self.neurons[n_idx].update_spike_times(t);
+
+                if delta_v != 0. {
+                    if self.neurons[n_idx].get_voltage() == -5. {
+                        f.write_all(
+                            format!("{}, input w: {}, dv: {} ========================================> (SPIKE!)\n",
+                            self.neurons[n_idx],
+                            self.neurons[n_idx].get_input_weight(),
+                            delta_v).as_bytes()).expect("Unable to write");
+                    } else {
+                        f.write_all(
+                            format!(
+                                "{}, input w: {}, dv: {}\n",
+                                self.neurons[n_idx],
+                                self.neurons[n_idx].get_input_weight(),
+                                delta_v
+                            )
+                            .as_bytes(),
+                        )
+                        .expect("Unable to write");
                     }
                 }
             }
+            f.write_all(format!("---------------------------------------------------------------------------------------------------------------------------------------------------------{}\n", t+2).as_bytes()).expect("Unable to draw");
         }
     }
 }
+
+// Doesn't deal with threshold DONE
+// Doesn't update the curr_neuron's spike_times (j) DONE
+// Should implement in a diff. method ??

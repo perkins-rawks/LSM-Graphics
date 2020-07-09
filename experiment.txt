@@ -1,0 +1,46 @@
+Input:
+0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0
+1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1
+0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0
+1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1
+
+Input time steps:   23 ms
+Total time steps:   50 ms
+Delay:              02 ms
+
+
+
+Static:
+- Lines:                    10820
+- Total Spikes:             36
+- Last Spike Occurrence:    23
+
+
+First-Order (tau = 4ms):
+- Lines:                    10537  
+- Total Spikes:             42 
+- Last Spike Occurrence:    34
+
+
+First-Order (tau = 8ms):
+- Lines:                    8243
+- Total Spikes:             35
+- Last Spike Occurrence:    33
+
+
+Second-Order:
+- Lines:                    6855
+- Total Spikes:             33
+- Last Spike Occurrence:    36
+
+
+Awildo Siqi  Sosina   Sam
+9000   9001   9005   9999
+  50     38     37     31
+  45     35     46     34
+
+Real: 6855 Winner: Awildo
+        33 Winner: Sam
+        36 Winner: Siqi
+
+

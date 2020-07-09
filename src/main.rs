@@ -5,7 +5,7 @@
 ///
 /// Date: July 8, 2020
 ///
-/// Description: We implement an LSM with a visual representation and clusters, imitating the brain. 
+/// Description: We implement an LSM with a visual representation and clusters, imitating the brain.
 ///
 /// To do:
 ///        o Take input
@@ -356,7 +356,6 @@ fn min_max(dists: &Vec<f32>) -> (f32, f32) {
     (min, max)
 }
 
-
 // let mut input_spike = get_input(); // get_input will read Perkins' files
 // let mut spike_train = input_to_voltage(spike_train);
 // for neuron in LSM.get_neurons().iter() {
@@ -397,7 +396,7 @@ fn main() {
     window.set_light(Light::StickToCamera); // Graphics settings
     const N_CLUSTERS: usize = 4; // The number of clusters
                                  // Input neurons, number of clusters, ratio of excitatory to inhibitory
-    let mut l1 = LSM::new(27, N_CLUSTERS, 0.8);
+    let mut l1 = LSM::new(4, N_CLUSTERS, 0.8);
     // PINK: Input: 27x4 = 108  => 27 for 3x3 pic. spiketrain
     // YELLOW: Output: 216/4 = 54/2 = 27 => 3x3 talk spike train
 
@@ -452,7 +451,12 @@ fn main() {
     let readout_lines = connects_data.2;
 
     let input = read_input();
-    l1.run(&input, "static", 2, 0, 0);
+    let models = ["static", "first order", "second order"];
+    let delay = 2;
+    let first_tau = 0;
+    // let tau_s2 = 2;
+    l1.run(&input, models[2], delay, first_tau);
+    // l1.run(&input, models[1], delay, 0, 0);
     // println!("Input: {:?}", input);
 
     // Rendering \\
