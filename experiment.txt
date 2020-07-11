@@ -17,8 +17,8 @@ Static:
 
 
 First-Order (tau = 4ms):
-- Lines:                    10537  
-- Total Spikes:             42 
+- Lines:                    10537
+- Total Spikes:             42
 - Last Spike Occurrence:    34
 
 
@@ -33,7 +33,7 @@ Second-Order:
 - Total Spikes:             33
 - Last Spike Occurrence:    36
 
-
+GUESSES
 Awildo Siqi  Sosina   Sam
 9000   9001   9005   9999
   50     38     37     31
@@ -44,3 +44,102 @@ Real: 6855 Winner: Awildo
         36 Winner: Siqi
 
 
+---------------------------------------------------------------------
+Number of 1's:      214 / 1104
+
+Input time steps:   23  ms
+Total time steps:   100 ms
+Delay:              02  ms
+Threshold:          20  mV
+Input:              4x4
+
+Static :
+- Lines:                  45223
+- Total Spikes:              97
+- Last Spike Occurrence:     27
+
+
+First-Order (tau = 4ms):
+- Lines:                  44309
+- Total Spikes:             107
+- Last Spike Occurrence:     30
+
+
+First-Order (tau = 8ms):
+- Lines:                  42522
+- Total Spikes:              93
+- Last Spike Occurrence:     44
+
+
+Second-Order:
+- Lines:                  39083
+- Total Spikes:              80
+- Last Spike Occurrence:     43
+
+---------------------------------------------------------------------
+Number of 1's:      476 / 1104
+
+Input time steps:   23  ms
+Total time steps:   100 ms
+Delay:              02  ms
+Threshold:          20  mV
+Input:              4x4
+
+
+Static :
+- Lines:                  53120
+- Total Spikes:             960
+- Last Spike Occurrence:     38
+
+
+First-Order (tau = 4ms):
+- Lines:                  51720
+- Total Spikes:            1437
+- Last Spike Occurrence:     76
+
+
+First-Order (tau = 8ms):
+- Lines:                  50808
+- Total Spikes:             961
+- Last Spike Occurrence:     74
+
+
+Second-Order:
+- Lines:                  49035
+- Total Spikes:             557
+- Last Spike Occurrence:     79
+
+--------------------------------------------------
+Number of 1's:      853 / 1104
+
+Input time steps:   23  ms
+Total time steps:   100 ms
+Delay:              02  ms
+Threshold:          20  mV
+Input:              4x4
+
+
+Static :
+- Lines:                  53820
+- Total Spikes:            1545
+- Last Spike Occurrence:     37
+
+
+First-Order (tau = 4ms):
+- Lines:                  51372
+- Total Spikes:            2321
+- Last Spike Occurrence:     86
+
+
+First-Order (tau = 8ms):
+- Lines:                  51163
+- Total Spikes:            1934
+- Last Spike Occurrence:     99
+
+
+Second-Order:
+- Lines:                  49994
+- Total Spikes:            1308
+- Last Spike Occurrence:     99
+
+--------------------------------------------------

@@ -75,7 +75,7 @@ impl Neuron {
             loc: Vector3::<f32>::new(0., 0., 0.),
             input_weight: 0,
             v: 0.,
-            v_th: 15.,
+            v_th: 20.,
             v_rest: 0.,
             pre_syn_connects: Vec::new(),
             spike_times: Vec::new(),
@@ -150,18 +150,6 @@ impl Neuron {
         // moving value
         self.spike_times = spike_times;
     }
-
-    // pub fn run(&mut self) {
-    //     // Takes a spike train and then compares voltages to threshold
-    //     // MAYBE takes a time too!
-    //     // ...
-    //     // Somewhere in here, we do
-    //     // self.spikes.push(time) but only if neuron fired / passed threshold
-
-    //     // Based on current voltage, update it using this differential equation
-    //     // (14) from
-    //     // A Digital Liquid State Machine With Biologically Inspired Learning and Its Application to Speech Recognition - Zhang
-    // }
 
     pub fn set_input_connect(&mut self, input_idx: usize) {
         self.input_connect = input_idx;

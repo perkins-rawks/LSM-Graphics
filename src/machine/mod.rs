@@ -473,54 +473,6 @@ impl LSM {
         ((x2 - x1).powf(2.) + (y2 - y1).powf(2.) + (z2 - z1).powf(2.)).sqrt()
     }
 
-    fn _comments() {
-        /*
-        Brainstorming:
-        We initialize an LSM with a few clusters.
-
-
-        We assume each neuron knows:
-        o its pre-synaptic neurons
-        o its pre-synaptic weights
-        Input we will manipulate from a file
-        o from txt file
-        o goes to the outside input layer neurons
-        o For each spiketrain, if it's 1, put in the index into the j list
-        o It should be manually connected to some reservoir input neurons
-                e.g.
-                Say we have outside input layer neuron n1
-                There are 5 of these n1 ... n5
-                There are 10 reservoir input neurons.
-                Then, lets say each outside input is connected to EVERY inside input.
-                An example matrix is
-                10 x 5 matrix containing just values between -8 and 8
-
-                Lets say each outside input is only connected to 4 inside inputs.
-                Then, the matrix is
-                10 x 5 matrix with each column having 4 values between -8 and 8,
-                other 6 have zeros
-
-        Input neurons (in the reservoir)
-        Reservoir business
-        Readout neurons
-
-
-        The first run through the reservoir
-        We read the input txt file and put it through special outside input layer
-        neurons (not really neurons). What is important is that we fill initial
-        weight values and spike times.
-
-        Say we have read the input, and we have a list of spike trains. Then
-        for each spike train, we multiply it by some weight (-8 to 8) and those are
-        our weights that we will put into the reservoir.
-        The spike times will be tracked thusly:
-        If the spike reads 1, push the index of that value into the times list.
-
-        ^ Where should this happen? Right after the clusters are made because
-        that's when we want the LSM to run.
-        */
-    }
-
     fn add_connections(&mut self, connects: DMatrix<u32>) {
         self.connections = connects;
     }
@@ -549,11 +501,18 @@ impl LSM {
         // FROM Zhang et al 2015 pg 2645
         let seed = [8; 32];
         let mut rng = StdRng::from_seed(seed);
+        let percentage = 0.8;
 
         let weights = [-8, 8];
         for neuron in self.get_neurons().iter_mut() {
             if neuron.get_spec() == &"liq_in".to_string() {
-                neuron.set_input_weight(weights.choose(&mut rng).unwrap().clone());
+                // neuron.set_input_weight(weights.choose(&mut
+                // rng).unwrap().clone());
+                if rng.gen::<f32>() < percentage {
+                    neuron.set_input_weight(weights[1]);
+                } else {
+                    neuron.set_input_weight(weights[0]);
+                }
             }
         }
     }
@@ -564,15 +523,6 @@ impl LSM {
 
         // Updates a neuron classified as "liq_in"'s input_connect attribute
         // This represents the index of that neuron in LSM input_layer vector
-
-        // We have: o all neurons in reservoir
-        //          o all neurons in input layer
-        //          o all input neurons in reservoir
-        //
-        // We want  o to connect one input layer neuron to one reservoir input
-        //            neuron in each cluster
-        //          o store in the connected neuron the index of this new pre-synaptic
-        //            connection
 
         let count: usize = self.n_total / self.n_clusters;
         for cluster in 0..self.n_clusters {
@@ -636,7 +586,7 @@ impl LSM {
         delay: i32,
         first_tau: u32,
         tau_s1: u32,
-        tau_s2: u32
+        tau_s2: u32,
     ) -> f32 {
         if model == "static" {
             return self.delta(curr_t - t_spike - delay);
@@ -662,31 +612,25 @@ impl LSM {
         panic!("Model was chosen incorrectly");
     }
 
-    pub fn run(
-        &mut self,
-        input: &Vec<Vec<u32>>,
-        model: &str,
-        delay: i32,
-        first_tau: u32,
-    ) {
+    pub fn run(&mut self, input: &Vec<Vec<u32>>, model: &str, delay: i32, first_tau: u32) {
         // Updates voltage connections for all neurons in the LSM.
         // Implementation of Equation 14/20/21 in Zhang et al 2015
 
-        /* 
+        /*
           2 Different kinds of running:
             o Input layer to reservoir input neurons
             o Any liquid to liquid
         */
-        
 
         let mut f = File::create("output.txt").expect("Unable to create a file");
 
         self.set_spike_times(input);
 
-        let n_time_steps: usize = input[0].len();
+        let input_time_steps: usize = input[0].len();
+        let n_time_steps = input_time_steps + delay as usize + 75;
 
         // For every time step in all the time steps
-        for t in 0..(n_time_steps + delay as usize + 25) {
+        for t in 0..n_time_steps {
             // For every post synaptic neuron in the liquid
             for n_idx in 0..self.neurons.len() {
                 // If the neuron is in time out, then skip and update timeout
@@ -700,7 +644,6 @@ impl LSM {
                 let curr_neuron = &self.neurons[n_idx];
                 // The total change in curr_neuron's voltage
                 let mut delta_v: f32 = -curr_neuron.get_voltage() / (self.tau_m as f32);
-
 
                 // If the neuron is a reservoir input
                 if curr_neuron.get_spec() == &"liq_in".to_string() {
@@ -726,10 +669,9 @@ impl LSM {
                                 delay,
                                 first_tau, // first order tau
                                 4, // values from Zhang et al paper for second order tau values
-                                8
+                                8,
                             );
-                        }
-                        else {
+                        } else {
                             // inhibitory synapse
                             model_calc = self.liq_response(
                                 model,
@@ -738,7 +680,7 @@ impl LSM {
                                 delay,
                                 first_tau,
                                 4,
-                                2
+                                2,
                             );
                         }
                         delta_v += (weight as f32) * model_calc;
@@ -795,7 +737,7 @@ impl LSM {
                             delay,
                             first_tau,
                             tau_s1,
-                            tau_s2
+                            tau_s2,
                         );
                         delta_v += (weight as f32) * model_calc;
                     }
@@ -829,6 +771,4 @@ impl LSM {
     }
 }
 
-// Doesn't deal with threshold DONE
-// Doesn't update the curr_neuron's spike_times (j) DONE
-// Should implement in a diff. method ??
+// EOF

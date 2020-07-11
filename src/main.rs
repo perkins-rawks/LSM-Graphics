@@ -3,16 +3,17 @@
 ///
 /// Authors: Awildo Gutierrez, Sampreeth Aravilli, Sosina Abuhay, Siqi Fang, Dave Perkins
 ///
-/// Date: July 8, 2020
+/// Date: July 11, 2020
 ///
-/// Description: We implement an LSM with a visual representation and clusters, imitating the brain.
+/// Description: We implement a Liquid State Machine with a visual representation and clusters, imitating the brain.
+///              We take input from an environment with either ambient noise or some meaningful information, all
+///              represented by special or non-special patterns of 0's and 1's. These abstract uses are towards the
+///              goal of getting two or more LSM's to talk to each other to complete a task.
 ///
 /// To do:
-///        o Take input
-///        o Convert input to voltage
-///        o Getting liquid states
-///        o Voltage diff eq's and change in voltage function
-///        o Teaching / Learning signals
+///        o Training Readouts to EAT, RUN, and IDLE
+///        o Teaching / Learning signals ^ ^ 
+///        o TALK function
 */
 
 use std::io::Write;
@@ -31,6 +32,8 @@ use nalgebra::Point3;
 mod machine;
 use machine::LSM;
 
+// These global variables are for us to start the program in whatever graphics
+// mode we want to. 
 const AXIS_ON: bool = true; // toggles x, y, and z axis
 const LINES_ON: bool = true; // toggles edges between neurons
 const READOUT_LINES_ON: bool = true; // toggles lines between the liquid and the readout
@@ -42,7 +45,7 @@ const RM_DIS_N: bool = true; // determines whether we want to remove neurons wit
 
 fn read_input() -> Vec<Vec<u32>> {
     // Read Perkins' input file (a list of spike trains)
-    // This input is of the form
+    // This input is of the form where # rows > # columns
     // 0 0 0 1 1 0 0 1 0
     // 0 1 0 1 1 0 1 0 1
     // ...
@@ -62,7 +65,6 @@ fn read_input() -> Vec<Vec<u32>> {
         }
         input.push(mini_input);
     }
-
     input
 }
 
@@ -97,6 +99,8 @@ fn render_lines(
         l.remove_disconnects(window);
     }
 
+    // Connect spheres will be filled of a line of spheres in a gradient
+    // of white to black
     let mut connect_sp: Vec<SceneNode> = Vec::new();
     if fancy {
         connect_sp = fancy_lines(window, lines, dists);
@@ -129,7 +133,7 @@ fn render_lines(
                     } else if key == Key::R {
                         readout_on = !readout_on;
                     }
-                    // Toggle fancy lines with F (doesn't work with big setups)
+                    // Toggle fancy lines with F (causes lag with big setups)
                     else if key == Key::F {
                         fancy = !fancy;
                     }
@@ -202,9 +206,9 @@ fn fancy_lines(
     lines: &Vec<(
         Point3<f32>, // Start point of a line
         Point3<f32>, // Endpoint of a line
-        Point3<f32>,
-    )>, // R, G, B color values
-    dists: &Vec<f32>,    // Distance of one sphere to each other in order of LSM.neurons
+        Point3<f32>, // R, G, B color values
+    )>, 
+    dists: &Vec<f32>, // Distance of one sphere to each other in order of LSM.neurons
 ) -> Vec<SceneNode> {
     // Alternative way to draw all the lines in the graphics. We represent lines by small spheres. \\
     let sp_per_dist = 0.03_f32; // 1 sphere every 0.05 units
@@ -356,55 +360,21 @@ fn min_max(dists: &Vec<f32>) -> (f32, f32) {
     (min, max)
 }
 
-// let mut input_spike = get_input(); // get_input will read Perkins' files
-// let mut spike_train = input_to_voltage(spike_train);
-// for neuron in LSM.get_neurons().iter() {
-//    neuron.set_input(spike_train); // maybe more than one
-// }
-// fn input_to_voltage(l: &mut LSM, spiketrains: Vec<Vec<u32>>) -> Vec<Vec<f32>> {
-//     // Converts all the input spike trains to voltages that a neuron can handle.
-//     set_input_weight(l);
-//     // spiketrain is a Vector like [0 0 0 0 1 0 0 1 0 1 0 1 1]
-//     // Voltage is related to how intense the input spike is.
-//     let mut voltages: Vec<f32> = Vec::new();
-
-//     // For every spike train, multiply it by that neuron's
-//     // for neuron in l.get_neurons().iter_mut() {
-//     // // Linearly. Let's say a 1 is + 5 voltage, a 0 is - 5 voltage
-//     // for item in spiketrains.iter() {
-//     //     // Item is a &u32 so deref to compare to u32
-//     //     if *item == 0 {
-//     //         voltages.push(0.);
-//     //     } else if *item == 1 {
-//     //         voltages.push(input_weight);
-//     //     }
-//     // }
-//     // voltages.push(voltage)
-//     // }
-//     // Alternative?
-
-//     voltages
-// }
-
-// We have a set of spike trains.
-// We want to convert them into voltages, send them into a function that makes
-// neurons run / fire.
-
 fn main() {
     // Important Variables \\
     let mut window = Window::new("Liquid State Machine"); // For graphics display
     window.set_light(Light::StickToCamera); // Graphics settings
     const N_CLUSTERS: usize = 4; // The number of clusters
                                  // Input neurons, number of clusters, ratio of excitatory to inhibitory
-    let mut l1 = LSM::new(4, N_CLUSTERS, 0.8);
+    let mut l1 = LSM::new(48, N_CLUSTERS, 0.8);
     // PINK: Input: 27x4 = 108  => 27 for 3x3 pic. spiketrain
     // YELLOW: Output: 216/4 = 54/2 = 27 => 3x3 talk spike train
 
-    // Each cluster: Nothing; Talk; Run; Eat
+    // Each cluster: Idle; Run; Eat; Talk
 
     // Creating Test Clusters \\
 
-    // Colors are tetratic numbers from
+    // Colors are tetradic numbers from
     // https://www.colorhexa.com/78866b
 
     let c1 = Point3::new(2.5, 2.5, 3.0);
