@@ -366,8 +366,10 @@ fn main() {
     let mut window = Window::new("Liquid State Machine"); // For graphics display
     window.set_light(Light::StickToCamera); // Graphics settings
     const N_CLUSTERS: usize = 4; // The number of clusters
-                                 // Input neurons, number of clusters, ratio of excitatory to inhibitory
-    let mut l1 = LSM::new(48, N_CLUSTERS, 0.8);
+                                 // Input neurons, number of clusters, ratio of
+                                 // excitatory to inhibitory
+    let inputs_per_cluster = 48;
+    let mut l1 = LSM::new(inputs_per_cluster, N_CLUSTERS, 0.8);
     // PINK: Input: 27x4 = 108  => 27 for 3x3 pic. spiketrain
     // YELLOW: Output: 216/4 = 54/2 = 27 => 3x3 talk spike train
 
@@ -397,6 +399,8 @@ fn main() {
     let cluster_colors: [(f32, f32, f32); N_CLUSTERS] = [color1, color2, color3, color4];
     let n_readouts: [usize; N_CLUSTERS] = [5, 4, 6, 2]; // number of readout neurons per cluster
 
+    assert_eq!(0, n % N_CLUSTERS);
+
     for idx in 0..N_CLUSTERS {
         l1.make_cluster(
             &mut window,
@@ -423,12 +427,9 @@ fn main() {
 
     let input = read_input();
     let models = ["static", "first order", "second order"];
-    let delay = 2;
+    let delay = 1;
     let first_tau = 0;
-    // let tau_s2 = 2;
     l1.run(&input, models[2], delay, first_tau);
-    // l1.run(&input, models[1], delay, 0, 0);
-    // println!("Input: {:?}", input);
 
     // Rendering \\
     let axis_len = 10.0;

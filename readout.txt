@@ -1,0 +1,8 @@
+Neuron: { id: 609 -- type: "readout" -- nt: "" -- voltage: 9.829409 mV }, dv: 0.3227088
+Neuron: { id: 610 -- type: "readout" -- nt: "" -- voltage: -5.8990674 mV }, dv: -0.14413236
+Neuron: { id: 611 -- type: "readout" -- nt: "" -- voltage: -5.417983 mV }, dv: -0.11909311
+Neuron: { id: 612 -- type: "readout" -- nt: "" -- voltage: -5.8905277 mV }, dv: -0.16540805
+Neuron: { id: 613 -- type: "readout" -- nt: "" -- voltage: -3.1120143 mV }, dv: -0.04520911
+Neuron: { id: 614 -- type: "readout" -- nt: "" -- voltage: -4.9835815 mV }, dv: -0.113698944
+Neuron: { id: 615 -- type: "readout" -- nt: "" -- voltage: -3.56278 mV }, dv: -0.039861538
+Neuron: { id: 616 -- type: "readout" -- nt: "" -- voltage: -3.5060575 mV }, dv: -0.01271034

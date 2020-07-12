@@ -174,12 +174,12 @@ impl Neuron {
         self.v += delta_v;
     }
 
-    pub fn update_spike_times(&mut self, curr_time: usize) {
+    pub fn update_spike_times(&mut self, curr_t: usize) {
         // Updates the spike times based on voltage. \\
         // If the current voltage is greater than threshold,
         // add the spike time to self attribute and update voltage
         if self.v_th < self.v {
-            self.spike_times.push(curr_time as u32);
+            self.spike_times.push(curr_t as u32);
             self.time_out = self.refrac_period;
             self.v = -5.; // so that it's harder to spike after resting
         }

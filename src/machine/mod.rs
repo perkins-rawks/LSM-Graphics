@@ -26,10 +26,12 @@ pub struct LSM {
     n_clusters: usize,                  // The number of cluster neurons
     e_ratio: f32,                       // 0-1 the ratio of excitatory to inhibitory neurons
     readouts: Vec<Vec<Neuron>>,         // List of all clusters of read out neurons
-    readout_weights: Vec<DMatrix<u32>>, // List of all the plastic weights between readouts and reservoir
+    readout_weights: Vec<DMatrix<f32>>, // List of all the plastic weights between readouts and reservoir
     input_layer: Vec<Neuron>,           // Set of neurons that read input outside the reservoir
     tau_m: u32,                         // time constant for membrane potential (ms)
     liq_weights: [i32; 4],              // Fixed synaptic weights in the reservoir
+    r_weight_max: f32,                  // The maximum weight between readout and reservoir
+    r_weight_min: f32,                  // The miniinimum weight between readout and reservoir
 }
 
 impl LSM {
@@ -47,6 +49,8 @@ impl LSM {
             input_layer: Vec::new(),
             tau_m: 32,
             liq_weights: [3, 6, -2, -2], // [EE, EI, IE, II]
+            r_weight_max: 8.,
+            r_weight_min: -8.,
         }
     }
 
@@ -126,6 +130,32 @@ impl LSM {
             }
         }
         self.n_total = self.neurons.len(); // update total neuron count
+
+        // Readout IDS
+        // For each readout in the most recent readout set made, set an
+        // appropriate ID
+
+        // INDEX WISE
+        let count = self.clusters[0].len(); // number of neurons in a single cluster
+        let r_len: usize = self.readouts.len();
+        // For each readout in the most recent readout set made
+        for r_idx in 0..self.readouts[r_len - 1].len() {
+            if r_idx == 0 && r_len == 1 {
+                // The very first readout neuron being setup \\
+                self.readouts[r_len - 1][r_idx].set_id(count * self.n_clusters);
+            } else if r_idx == 0 && r_len > 1 {
+                // If NOT the first readout cluster and the index is 0 \\
+                let last_readout: &Neuron = &self.readouts[r_len - 2] // prev cluster
+                    [self.readouts[r_len - 2].len() - 1]; // last item in that prev cluster
+                let prev_id = last_readout.get_id();
+                self.readouts[r_len - 1][r_idx].set_id(prev_id + 1);
+            } else {
+                // Generally \\
+                let last_readout: &Neuron = &self.readouts[r_len - 1][r_idx - 1];
+                let prev_id: usize = last_readout.get_id();
+                self.readouts[r_len - 1][r_idx].set_id(prev_id + 1);
+            }
+        }
     }
 
     fn assign_input(&mut self, neurons: &mut Vec<Neuron>) {
@@ -380,14 +410,16 @@ impl LSM {
     fn make_readout_connects(&mut self) -> Vec<(Point3<f32>, Point3<f32>, Point3<f32>)> {
         // connect_lines: <(point 1, point 2, color), ... >
         let mut connect_lines: Vec<(Point3<f32>, Point3<f32>, Point3<f32>)> = Vec::new();
+        let seed = [8; 32];
+        let mut rng = StdRng::from_seed(seed);
+
         // Number of neurons in one cluster, assuming all clusters are equally sized
         let count = self.n_total / self.n_clusters;
-        // For all clusters..
         for cluster_idx in 0..self.n_clusters {
             // Number of readout neurons in a given cluster
             let readout_len = self.readouts[cluster_idx].len();
             // Each column is all the connections for one readout neuron.
-            let mut readout_weights = DMatrix::<u32>::zeros(readout_len, count);
+            let mut readout_weights = DMatrix::<f32>::zeros(readout_len, count);
             // For all readout neurons in a readout set
             for readout_idx in 0..readout_len {
                 let r_loc = self.readouts[cluster_idx][readout_idx].get_loc();
@@ -406,7 +438,8 @@ impl LSM {
 
                     // 'The neuron_idx % count' is to sort by cluster
                     // All readout weights are set to 1 at first
-                    readout_weights[(readout_idx, neuron_idx % count)] = 1;
+                    readout_weights[(readout_idx, neuron_idx % count)] =
+                        (rng.gen::<f32>() * 16.) + 4./* -4.*/;
                 }
             }
             self.readout_weights.push(readout_weights);
@@ -617,9 +650,10 @@ impl LSM {
         // Implementation of Equation 14/20/21 in Zhang et al 2015
 
         /*
-          2 Different kinds of running:
+          3 Different kinds of running:
             o Input layer to reservoir input neurons
             o Any liquid to liquid
+            o Reservoir to readout neurons
         */
 
         let mut f = File::create("output.txt").expect("Unable to create a file");
@@ -687,19 +721,23 @@ impl LSM {
                     }
                 }
 
-                let tau_s1 = curr_neuron.get_second_tau()[0];
-                let tau_s2 = curr_neuron.get_second_tau()[1];
                 // The indices of the pre-syn. connections self.neurons[n_idx]
                 // has with the rest of the LSM
                 let pre_syn_connects: &Vec<usize> = curr_neuron.get_pre_syn_connects();
                 // Loop through all the pre synaptic neuron indices
                 for connect_idx_idx in 0..pre_syn_connects.len() {
                     // For each pre synaptic neuron, loop through all its spikes
-
                     // The pre synaptic neuron that we are currently looking at
                     // pre_syn_connects[connect_idx_idx] is the index of one of
                     // the pre synaptic connections of curr_neuron
                     let pre_syn_neuron: &Neuron = &self.neurons[pre_syn_connects[connect_idx_idx]];
+
+                    // Tau values for second order are based on whether the PRE
+                    // Synaptic neuron was Excitatory or Inhibitory
+                    // E -> I or E -> E, [4, 8]
+                    // I -> I or I -> E, [4, 2]
+                    let tau_s1 = pre_syn_neuron.get_second_tau()[0];
+                    let tau_s2 = pre_syn_neuron.get_second_tau()[1];
                     let spike_times: &Vec<u32> = pre_syn_neuron.get_spike_times();
                     // Looks through all the spikes of the pre-syn neuron and calculates
                     // how the voltage will change
@@ -767,8 +805,79 @@ impl LSM {
                 }
             }
             f.write_all(format!("---------------------------------------------------------------------------------------------------------------------------------------------------------{}\n", t+2).as_bytes()).expect("Unable to draw");
+            self.readout_read(model, t, delay, first_tau);
+        }
+    }
+
+    fn readout_read(&mut self, model: &str, curr_t: usize, delay: i32, first_tau: u32) {
+        // For each time step, we calculate from the neuron activity of the
+        // reservoir and update the calcium / voltage of the readout neurons.
+
+        let mut f = File::create("readout.txt").expect("Unable to create a file");
+
+        // Assuming each cluster has the same # of neurons
+        let count: usize = self.n_total / self.n_clusters;
+        for cluster_idx in 0..self.n_clusters {
+            // For each readout neuron
+            for r_idx in 0..self.readouts[cluster_idx].len() {
+                let curr_readout: &Neuron = &self.readouts[cluster_idx][r_idx];
+                let mut delta_v: f32 = curr_readout.get_voltage() / (self.tau_m as f32);
+
+                // for each neuron in the cluster; these are pre-synaptic neurons
+                // to each readout neuron
+                for n_idx in (cluster_idx * count)..(cluster_idx * (count + 1)) {
+                    // n_idx is each neuron in the cluster. And each liquid
+                    // neuron in a cluster is a PRE-Synaptic neuron to the readout
+                    let pre_syn_neuron: &Neuron = &self.neurons[n_idx];
+                    let tau_s1 = pre_syn_neuron.get_second_tau()[0];
+                    let tau_s2 = pre_syn_neuron.get_second_tau()[1];
+
+                    let spike_times: &Vec<u32> = pre_syn_neuron.get_spike_times();
+                    for spike_time in spike_times.iter() {
+                        // Update voltage (equation 14 in Zhang et al)
+
+                        // self.readouts[cluster_idx][r_idx].set_voltage();
+                        // println!("{}",n_idx)
+                        let weight: f32 = self.readout_weights[cluster_idx][(r_idx, n_idx % count)];
+                        let model_calc: f32 = self.liq_response(
+                            model,
+                            curr_t as i32,
+                            spike_time.clone() as i32, // bs
+                            delay,
+                            first_tau,
+                            tau_s1,
+                            tau_s2,
+                        );
+                        // let teacher_signal: f32 = injected_current();
+                        // delta_v += weight * model_calc + teacher_signal;
+                        delta_v += weight * model_calc;
+                    }
+                }
+                self.readouts[cluster_idx][r_idx].update_voltage(delta_v);
+                self.readouts[cluster_idx][r_idx].update_spike_times(curr_t);
+
+                // Writing to file! 
+                if delta_v != 0. {
+                    if self.readouts[cluster_idx][r_idx].get_voltage() == -5. {
+                        f.write_all(
+                            format!(
+                                "{}, dv: {} ========================================> (SPIKE!)\n",
+                                self.readouts[cluster_idx][r_idx], delta_v
+                            )
+                            .as_bytes(),
+                        )
+                        .expect("Unable to write");
+                    } else {
+                        f.write_all(
+                            format!("{}, dv: {}\n", self.readouts[cluster_idx][r_idx], delta_v)
+                                .as_bytes(),
+                        )
+                        .expect("Unable to write");
+                    }
+                }
+            }
         }
     }
 }
 
-// EOF
+// END OF FILE
