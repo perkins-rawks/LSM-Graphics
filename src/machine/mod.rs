@@ -29,9 +29,11 @@ pub struct LSM {
     readout_weights: Vec<DMatrix<f32>>, // List of all the plastic weights between readouts and reservoir
     input_layer: Vec<Neuron>,           // Set of neurons that read input outside the reservoir
     tau_m: u32,                         // time constant for membrane potential (ms)
-    liq_weights: [i32; 4],              // Fixed synaptic weights in the reservoir
-    r_weight_max: f32,                  // The maximum weight between readout and reservoir
-    r_weight_min: f32,                  // The miniinimum weight between readout and reservoir
+    tau_c: u32,
+    liq_weights: [i32; 4], // Fixed synaptic weights in the reservoir
+    r_weight_max: f32,     // The maximum weight between readout and reservoir
+    r_weight_min: f32,     // The minimum weight between readout and reservoir
+    d_weight: f32,
 }
 
 impl LSM {
@@ -48,9 +50,11 @@ impl LSM {
             readout_weights: Vec::new(),
             input_layer: Vec::new(),
             tau_m: 32,
+            tau_c: 64,
             liq_weights: [3, 6, -2, -2], // [EE, EI, IE, II]
-            r_weight_max: 8.,
-            r_weight_min: -8.,
+            r_weight_max: 8.,            // from weight-max calc
+            r_weight_min: -8.,           // from weight_min calc
+            d_weight: 0.0002 * (2 as f32).powf(8. - 4.), // 0.0002 * 2 ^ (n_bits - 4) but scaled down
         }
     }
 
@@ -136,7 +140,10 @@ impl LSM {
         // appropriate ID
 
         // INDEX WISE
-        let count = self.clusters[0].len(); // number of neurons in a single cluster
+        // assuming each cluster has the same # of neurons
+        // We CANNOT use self.n_total because the LSM is not filled yet. This is
+        // only called in the process of setting up the LSM.
+        let count: usize = self.clusters[0].len(); // number of neurons in a single cluster
         let r_len: usize = self.readouts.len();
         // For each readout in the most recent readout set made
         for r_idx in 0..self.readouts[r_len - 1].len() {
@@ -147,7 +154,7 @@ impl LSM {
                 // If NOT the first readout cluster and the index is 0 \\
                 let last_readout: &Neuron = &self.readouts[r_len - 2] // prev cluster
                     [self.readouts[r_len - 2].len() - 1]; // last item in that prev cluster
-                let prev_id = last_readout.get_id();
+                let prev_id: usize = last_readout.get_id();
                 self.readouts[r_len - 1][r_idx].set_id(prev_id + 1);
             } else {
                 // Generally \\
@@ -229,8 +236,6 @@ impl LSM {
     fn add_cluster(&mut self, add_cluster: Vec<Neuron>) {
         self.clusters.push(add_cluster);
     }
-
-    // Neuron Methods \\
 
     pub fn get_neurons(&mut self) -> &mut Vec<Neuron> {
         &mut self.neurons
@@ -439,7 +444,7 @@ impl LSM {
                     // 'The neuron_idx % count' is to sort by cluster
                     // All readout weights are set to 1 at first
                     readout_weights[(readout_idx, neuron_idx % count)] =
-                        (rng.gen::<f32>() * 16.) + 4./* -4.*/;
+                        (rng.gen::<f32>() * 16.) - 8.;
                 }
             }
             self.readout_weights.push(readout_weights);
@@ -591,9 +596,9 @@ impl LSM {
     }
 
     fn delta(&self, n: i32) -> f32 {
-        // Dirac delta function
+        // Kronecker / Dirac delta function
         // A spike helper function
-        // It outputs 1 only at 0
+        // It outputs 1 only at 0 (Dirac outputs infinity at 0)
         if n == 0 {
             return 1.;
         }
@@ -605,11 +610,64 @@ impl LSM {
         // When n < 0, H(n) = 0
         //      n > 0, H(n) = 1
         //      n = 0, H is undefined, but we put 1
-        if n < 0 {
+        if n </*=*/ 0 {
             return 0.;
         }
         1.
     }
+
+    // In readout_read, every time we change calcium, if it's above a threshold, we
+    // potentiate for one readout neuron. 
+    fn potentiate(&mut self, cluster_idx: usize, r_idx: usize, prob: f32) {
+        // loop through its pre-syn neurons and increase the weights for them
+        let seed = [9; 32];
+        let mut rng = StdRng::from_seed(seed);
+        let weight_len = self.readout_weights[cluster_idx].len();
+        // readout_weights is a list of matrices representing the weights
+        // between neurons in the liquid and the readout neurons
+        for n_idx in 0..weight_len {
+            if rng.gen::<f32>() < prob {
+                self.readout_weights[cluster_idx][(r_idx, n_idx)] += self.d_weight;
+            }
+        }
+    }
+
+    fn depress(&mut self, cluster_idx: usize, r_idx: usize, prob: f32) {
+        // loop through its pre-syn neurons and increase the weights for them
+        let seed = [9; 32];
+        let mut rng = StdRng::from_seed(seed);
+        let weight_len = self.readout_weights[cluster_idx].len();
+        // readout_weights is a list of matrices representing the weights
+        // between neurons in the liquid and the readout neurons
+        for n_idx in 0..weight_len {
+            if rng.gen::<f32>() < prob {
+                self.readout_weights[cluster_idx][(r_idx, n_idx)] -= self.d_weight;
+            }
+        }
+    }
+
+    /*
+    fn potentiate(&mut self, cluster_idx: usize, r_idx: usize, prob_plus: f32, prob_minus: f32, potentiate: bool) {
+        // loop through its pre-syn neurons and increase the weights for them
+        let seed = [9; 32];
+        let mut rng = StdRng::from_seed(seed);
+        let weight_len = self.readout_weights[cluster_idx].len();
+        // readout_weights is a list of matrices representing the weights
+        // between neurons in the liquid and the readout neurons
+        for n_idx in 0..weight_len {
+            if potentiate {
+                if rng.gen::<f32>() < prob_plus {
+                    self.readout_weights[cluster_idx][(r_idx, n_idx)] += self.d_weight;
+                }
+            }
+            else {
+                if rng.gen::<f32>() < prob_minus {
+                    self.readout_weights[cluster_idx][(r_idx, n_idx)] -= self.d_weight;
+                }
+            }
+        }
+    }
+    */
 
     fn liq_response(
         &self,
@@ -635,12 +693,12 @@ impl LSM {
             let exponent2: f32 = ((curr_t - t_spike - delay) as f32 * -1.) / (tau_s2 as f32);
             let denominator: f32 = tau_s1 as f32 - tau_s2 as f32;
             let h = self.heaviside(curr_t - t_spike - delay);
-            let part1 = f32::exp(exponent1) * h / denominator;
-            let part2 = f32::exp(exponent2) * h / denominator;
+            let part1 = f32::exp(exponent1);
+            let part2 = f32::exp(exponent2);
             // In equation 21, if we factor out w, we can just
             // subtract the two parts together instead of calculate
             // two separately
-            return part1 - part2;
+            return (part1 - part2) * h / denominator;
         }
         panic!("Model was chosen incorrectly");
     }
@@ -656,7 +714,8 @@ impl LSM {
             o Reservoir to readout neurons
         */
 
-        let mut f = File::create("output.txt").expect("Unable to create a file");
+        let mut f1 = File::create("output.txt").expect("Unable to create a file");
+        let mut f2 = File::create("readout.txt").expect("Unable to create a file");
 
         self.set_spike_times(input);
 
@@ -785,13 +844,13 @@ impl LSM {
 
                 if delta_v != 0. {
                     if self.neurons[n_idx].get_voltage() == -5. {
-                        f.write_all(
+                        f1.write_all(
                             format!("{}, input w: {}, dv: {} ========================================> (SPIKE!)\n",
                             self.neurons[n_idx],
                             self.neurons[n_idx].get_input_weight(),
                             delta_v).as_bytes()).expect("Unable to write");
                     } else {
-                        f.write_all(
+                        f1.write_all(
                             format!(
                                 "{}, input w: {}, dv: {}\n",
                                 self.neurons[n_idx],
@@ -804,16 +863,24 @@ impl LSM {
                     }
                 }
             }
-            f.write_all(format!("---------------------------------------------------------------------------------------------------------------------------------------------------------{}\n", t+2).as_bytes()).expect("Unable to draw");
-            self.readout_read(model, t, delay, first_tau);
+            f1.write_all(format!("---------------------------------------------------------------------------------------------------------------------------------------------------------{}\n", t as i32 + delay).as_bytes()).expect("Unable to draw");
+            self.readout_read(model, t, delay, first_tau, &mut f2);
         }
     }
 
-    fn readout_read(&mut self, model: &str, curr_t: usize, delay: i32, first_tau: u32) {
+    fn readout_read(
+        &mut self,
+        model: &str,
+        curr_t: usize,
+        delay: i32,
+        first_tau: u32,
+        f: &mut File,
+        // label: 
+    ) {
         // For each time step, we calculate from the neuron activity of the
         // reservoir and update the calcium / voltage of the readout neurons.
 
-        let mut f = File::create("readout.txt").expect("Unable to create a file");
+        // let mut f = File::create("readout.txt").expect("Unable to create a file");
 
         // Assuming each cluster has the same # of neurons
         let count: usize = self.n_total / self.n_clusters;
@@ -821,11 +888,11 @@ impl LSM {
             // For each readout neuron
             for r_idx in 0..self.readouts[cluster_idx].len() {
                 let curr_readout: &Neuron = &self.readouts[cluster_idx][r_idx];
-                let mut delta_v: f32 = curr_readout.get_voltage() / (self.tau_m as f32);
-
-                // for each neuron in the cluster; these are pre-synaptic neurons
+                let mut delta_v: f32 = -curr_readout.get_voltage() / (self.tau_m as f32);
+                let mut delta_c: f32 = -curr_readout.get_calcium() / (self.tau_c as f32);
+                // For each neuron in the cluster; these are pre-synaptic neurons
                 // to each readout neuron
-                for n_idx in (cluster_idx * count)..(cluster_idx * (count + 1)) {
+                for n_idx in (cluster_idx * count)..((cluster_idx + 1) * count) {
                     // n_idx is each neuron in the cluster. And each liquid
                     // neuron in a cluster is a PRE-Synaptic neuron to the readout
                     let pre_syn_neuron: &Neuron = &self.neurons[n_idx];
@@ -833,51 +900,83 @@ impl LSM {
                     let tau_s2 = pre_syn_neuron.get_second_tau()[1];
 
                     let spike_times: &Vec<u32> = pre_syn_neuron.get_spike_times();
+                    // if spike_times.len() != 0 {
+                    //     println!("Spike times: {:?}, Curr_time: {}", spike_times, curr_t);
+                    // }
                     for spike_time in spike_times.iter() {
-                        // Update voltage (equation 14 in Zhang et al)
+                        // Update voltage and calcium (a la equation 14, 21 in Zhang et al)
 
-                        // self.readouts[cluster_idx][r_idx].set_voltage();
                         // println!("{}",n_idx)
                         let weight: f32 = self.readout_weights[cluster_idx][(r_idx, n_idx % count)];
                         let model_calc: f32 = self.liq_response(
                             model,
                             curr_t as i32,
-                            spike_time.clone() as i32, // bs
+                            spike_time.clone() as i32,
                             delay,
                             first_tau,
                             tau_s1,
                             tau_s2,
                         );
-                        // let teacher_signal: f32 = injected_current();
+                        // let teacher_signal: f32 = injected_current(); MAYBE LATER
                         // delta_v += weight * model_calc + teacher_signal;
                         delta_v += weight * model_calc;
+                        delta_c += self.delta(curr_t as i32 - spike_time.clone() as i32);
                     }
                 }
                 self.readouts[cluster_idx][r_idx].update_voltage(delta_v);
                 self.readouts[cluster_idx][r_idx].update_spike_times(curr_t);
+                self.readouts[cluster_idx][r_idx].update_calcium(delta_c);
+                self.readouts[cluster_idx][r_idx].update_calcium_desired(&inputs);
+                // self.update_calcium_desired();
 
-                // Writing to file! 
-                if delta_v != 0. {
+                // Writing to file!
+                if delta_v != 0. || delta_c != 0. {
                     if self.readouts[cluster_idx][r_idx].get_voltage() == -5. {
                         f.write_all(
                             format!(
-                                "{}, dv: {} ========================================> (SPIKE!)\n",
-                                self.readouts[cluster_idx][r_idx], delta_v
+                                "{}, dv: {}, dc:{} ========================================> (SPIKE!)\n",
+                                self.readouts[cluster_idx][r_idx], delta_v, delta_c,
                             )
                             .as_bytes(),
                         )
                         .expect("Unable to write");
                     } else {
                         f.write_all(
-                            format!("{}, dv: {}\n", self.readouts[cluster_idx][r_idx], delta_v)
-                                .as_bytes(),
+                            format!(
+                                "{}, dv: {}, dc: {}\n",
+                                self.readouts[cluster_idx][r_idx], delta_v, delta_c
+                            )
+                            .as_bytes(),
                         )
                         .expect("Unable to write");
                     }
                 }
             }
         }
+        f.write_all(format!("---------------------------------------------------------------------------------------------------------------------------------------------------------{}\n", curr_t as i32 + delay).as_bytes()).expect("Unable to draw");
     }
+
+    // pub fn graph_anal(&self, readout: &mut Neuron) {
+    //     // d - depress, p - potentiate, c_m - margin above / below c_th
+    //     // c_r 
+    //     //       |  N    |    N
+    //     // c_m   |  d    |    p
+    //     // c_th  |  d    |    p
+    //     // c_m   |  d    |    p
+    //     //       |  N    |    p
+    //     //       |_______________
+    //     //          c_th        c_d
+
+    //     let c: f32 = readout.get_calcium();
+    //     let c_d: f32 = readout.get_calcium_desired();
+
+    //     if readout.get_calcium_desired() > readout.get_calcium_threshold() {
+    //         if self.c <= self.c_th + self.c_margin {
+                
+    //         }
+    //     }
+    // }
+
 }
 
 // END OF FILE

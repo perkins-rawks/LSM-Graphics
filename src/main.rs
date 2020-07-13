@@ -4,16 +4,16 @@
 ///
 /// Authors: Awildo Gutierrez, Sampreeth Aravilli, Sosina Abuhay, Siqi Fang, Dave Perkins
 ///
-/// Date: July 11, 2020
+/// Date: July 13, 2020
 ///
 /// Description: We implement a Liquid State Machine with a visual representation and clusters, imitating the brain.
 ///              We take input from an environment with either ambient noise or some meaningful information, all
 ///              represented by special or non-special patterns of 0's and 1's. These abstract uses are towards the
-///              goal of getting two or more LSM's to talk to each other to complete a task.
+///              goal of getting two or more "LSM"s to talk to each other to complete a task.
 ///
 /// To do:
 ///        o Training Readouts to EAT, RUN, and IDLE
-///        o Teaching / Learning signals ^ ^ 
+///        o Teaching / Learning signals ^ ^
 ///        o TALK function
 */
 
@@ -34,7 +34,7 @@ mod machine;
 use machine::LSM;
 
 // These global variables are for us to start the program in whatever graphics
-// mode we want to. 
+// mode we want to.
 const AXIS_ON: bool = true; // toggles x, y, and z axis
 const LINES_ON: bool = true; // toggles edges between neurons
 const READOUT_LINES_ON: bool = true; // toggles lines between the liquid and the readout
@@ -68,6 +68,8 @@ fn read_input() -> Vec<Vec<u32>> {
     }
     input
 }
+
+fn read_labels() -> Vec<&str> {}
 
 fn render_lines(
     window: &mut Window,                                          // Our window
@@ -208,7 +210,7 @@ fn fancy_lines(
         Point3<f32>, // Start point of a line
         Point3<f32>, // Endpoint of a line
         Point3<f32>, // R, G, B color values
-    )>, 
+    )>,
     dists: &Vec<f32>, // Distance of one sphere to each other in order of LSM.neurons
 ) -> Vec<SceneNode> {
     // Alternative way to draw all the lines in the graphics. We represent lines by small spheres. \\
@@ -428,8 +430,8 @@ fn main() {
     let input = read_input();
     let models = ["static", "first order", "second order"];
     let delay = 1;
-    let first_tau = 0;
-    l1.run(&input, models[2], delay, first_tau);
+    let first_tau = 4;
+    l1.run(&input, models[1], delay, first_tau);
 
     // Rendering \\
     let axis_len = 10.0;

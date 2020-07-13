@@ -22,19 +22,16 @@ pub struct Neuron {
     v: f32,                       // Voltage of a neuron (mV)
     v_th: f32,                    // Voltage threshold to activate (mV)
     v_rest: f32,                  // The resting voltage (mV)
-    refrac_period: u32,           // Refractory period, the time (in ms) it takes to get back to resting
-    time_out: u32,                // Used for tracking refractory period
+    refrac_period: u32, // Refractory period, the time (in ms) it takes to get back to resting
+    time_out: u32,      // Used for tracking refractory period
     pre_syn_connects: Vec<usize>, // Indices of pre-synaptic neurons
     spike_times: Vec<u32>, // The times at which a spike / neuron fire happens (an index of a 1 in a spike train)
-    input_connect: usize,  // The index of the input layer neuron this is connected to. (only if "liq_in")
-    second_tau: [u32; 2]   // Time constants for second order model for voltage
-    // tau_c: u32, // time constant for calcium level (ms)
-                          // pre: Vec<Neuron>, presynaptic neurons
-                          // pre_weights: DMatrix<Some Size>, weights of presynaptic neurons (has to
-                          // do with excitatory / inhibitoryness)
-                          // spikes: Vec<f32>, list of spike times
-
-                          // time constants for first order / second order dynamics
+    input_connect: usize, // The index of the input layer neuron this is connected to. (only if "liq_in")
+    second_tau: [u32; 2], // Time constants for second order model for voltage
+    c: f32,                       // Calcium of a readout neuron
+    c_th: f32,                    // Calcium threshold for a readout neuron
+    c_d: f32,                     // Desired calcium of a readout neuron
+    c_margin: f32,                // Margin around the C threshold
 }
 
 impl fmt::Display for Neuron {
@@ -42,14 +39,19 @@ impl fmt::Display for Neuron {
     // Formatter: '_ is a lifetime argument making it so that fmt lasts as long
     // as self
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "Neuron: {{ id: {} -- type: \"{}\" -- nt: \"{}\" -- voltage: {} mV }}",
-            self.id,
-            self.spec,
-            self.nt,
-            self.v
-        )
+        if self.spec == "readout".to_string() {
+            write!(
+                f,
+                "Neuron: {{ id: {} -- type: \"{}\" -- nt: \"{}\" -- voltage: {} mV -- calcium: {} }}",
+                self.id, self.spec, self.nt, self.v, self.c
+            )
+        } else {
+            write!(
+                f,
+                "Neuron: {{ id: {} -- type: \"{}\" -- nt: \"{}\" -- voltage: {} mV }}",
+                self.id, self.spec, self.nt, self.v
+            )
+        }
     }
 }
 
@@ -59,7 +61,7 @@ impl Neuron {
         obj: SceneNode,
         // connects: Vec<u32>, /*, v: f32, theta: f32, v_rest: f32, n_t: String, input: bool, read_out: bool*/
         spec: &str,
-        cluster: &str
+        cluster: &str,
     ) -> Neuron {
         assert!(true, TYPES.contains(&spec)); // has to be inside TYPES
         Self {
@@ -83,8 +85,12 @@ impl Neuron {
             refrac_period: 2,
             time_out: 0,
             second_tau: [0, 0],
+            c: 0.,
+            c_th: 5.,
+            c_d: 0.,
+            c_margin: 3.,
             //tau_m: 32,
-            // tau_c: 64,
+            //tau_c: 64,
         }
     }
 
@@ -174,6 +180,24 @@ impl Neuron {
         self.v += delta_v;
     }
 
+    pub fn get_calcium(&self) -> f32 {
+        self.c.clone()
+    }
+
+    pub fn update_calcium(&mut self, delta_c: f32) {
+        // Moves the calcium value
+        self.c += delta_c;
+    }
+
+    pub fn set_calcium_desired(&mut self, new_c_d: f32) {
+        // Moves parameter c_d
+        self.c_d = new_c_d;
+    }
+
+    pub fn get_calcium_desired(&self) {
+        &self.c_d;
+    }
+
     pub fn update_spike_times(&mut self, curr_t: usize) {
         // Updates the spike times based on voltage. \\
         // If the current voltage is greater than threshold,
@@ -201,4 +225,13 @@ impl Neuron {
     pub fn set_second_tau(&mut self, tau_s1: u32, tau_s2: u32) {
         self.second_tau = [tau_s1, tau_s2];
     }
+
+    pub fn update_calcium_desired(&self) {
+
+    }
+
+    // // Temporary
+    // pub fn update_calcium_desired (&mut self) {
+    //     self.c_d = 3.*self.c_th;
+    // }
 }
