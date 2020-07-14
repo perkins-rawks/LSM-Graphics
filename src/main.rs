@@ -69,7 +69,17 @@ fn read_input() -> Vec<Vec<u32>> {
     input
 }
 
-fn read_labels() -> Vec<&str> {}
+fn read_labels() -> Vec<String> {
+    // A label is a description of the action desired for each column of input.
+    // Our file, labels.txt, is what we will use to supervise learning.
+    let contents = fs::read_to_string("labels.txt").expect("Unable to read input file");
+    let contents: Vec<&str> = contents.split("\n").collect();
+    let mut labels: Vec<String> = Vec::new();
+    for line in contents.iter() {
+        labels.push(line.trim().to_string());
+    }
+    labels
+}
 
 fn render_lines(
     window: &mut Window,                                          // Our window
@@ -396,10 +406,13 @@ fn main() {
     let n: usize = 600; // The total number of neurons in all clusters
     let var: f32 = 1.15; //1.75 // The variance in std. dev.
     let r: f32 = 0.1; // The radius of a single sphere
-    let cluster_types: [&str; N_CLUSTERS] = ["nothing", "talk", "run", "eat"];
+
+    // IF UPDATED MUST UPDATE NEURON GLOBAL 'CLUSTERS'
+    let cluster_types: [&str; N_CLUSTERS] = ["talk", "hide", "run", "eat"];
+
     let cluster_locs: [Point3<f32>; N_CLUSTERS] = [c1, c2, c3, c4];
     let cluster_colors: [(f32, f32, f32); N_CLUSTERS] = [color1, color2, color3, color4];
-    let n_readouts: [usize; N_CLUSTERS] = [5, 4, 6, 2]; // number of readout neurons per cluster
+    let n_readouts: [usize; N_CLUSTERS] = [5, 5, 5, 5]; // number of readout neurons per cluster
 
     assert_eq!(0, n % N_CLUSTERS);
 
@@ -428,10 +441,12 @@ fn main() {
     let readout_lines = connects_data.2;
 
     let input = read_input();
+    let labels = read_labels();
+    assert_eq!(labels.len(), input[0].len()); // # of labels == # of columns
     let models = ["static", "first order", "second order"];
     let delay = 1;
     let first_tau = 4;
-    l1.run(&input, models[1], delay, first_tau);
+    l1.run(&input, &labels, models[1], delay, first_tau);
 
     // Rendering \\
     let axis_len = 10.0;

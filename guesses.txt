@@ -1,0 +1,105 @@
+Label: nothing -- Output: nothing ========================================> (CORRECT!)
+Label: nothing -- Output: nothing ========================================> (CORRECT!)
+Label: nothing -- Output: nothing ========================================> (CORRECT!)
+Label: nothing -- Output: nothing ========================================> (CORRECT!)
+Label: nothing -- Output: nothing ========================================> (CORRECT!)
+Label: nothing -- Output: nothing ========================================> (CORRECT!)
+Label: nothing -- Output: nothing ========================================> (CORRECT!)
+Label: nothing -- Output: nothing ========================================> (CORRECT!)
+Label: nothing -- Output: nothing ========================================> (CORRECT!)
+Label: nothing -- Output: nothing ========================================> (CORRECT!)
+Label: nothing -- Output: nothing ========================================> (CORRECT!)
+Label: nothing -- Output: nothing ========================================> (CORRECT!)
+Label: nothing -- Output: nothing ========================================> (CORRECT!)
+Label: nothing -- Output: nothing ========================================> (CORRECT!)
+Label: talk -- Output: nothing
+Label: talk -- Output: nothing
+Label: talk -- Output: nothing
+Label: talk -- Output: talk ========================================> (CORRECT!)
+Label: talk -- Output: talk ========================================> (CORRECT!)
+Label: talk -- Output: talk ========================================> (CORRECT!)
+Label: talk -- Output: talk ========================================> (CORRECT!)
+Label: talk -- Output: talk ========================================> (CORRECT!)
+Label: talk -- Output: talk ========================================> (CORRECT!)
+Label: nothing -- Output: talk
+Label: nothing -- Output: talk
+Label: nothing -- Output: talk
+Label: nothing -- Output: talk
+Label: nothing -- Output: talk
+Label: eat -- Output: talk
+Label: eat -- Output: talk
+Label: eat -- Output: talk
+Label: eat -- Output: talk
+Label: eat -- Output: talk
+Label: eat -- Output: talk
+Label: eat -- Output: talk
+Label: eat -- Output: talk
+Label: eat -- Output: talk
+Label: eat -- Output: talk
+Label: nothing -- Output: talk
+Label: nothing -- Output: talk
+Label: nothing -- Output: talk
+Label: nothing -- Output: talk
+Label: nothing -- Output: talk
+Label: nothing -- Output: talk
+Label: nothing -- Output: talk
+Label: nothing -- Output: talk
+Label: nothing -- Output: talk
+Label: nothing -- Output: talk
+Label: nothing -- Output: talk
+Label: eat -- Output: talk
+Label: eat -- Output: talk
+Label: eat -- Output: talk
+Label: eat -- Output: talk
+Label: eat -- Output: talk
+Label: eat -- Output: talk
+Label: eat -- Output: talk
+Label: eat -- Output: talk
+Label: eat -- Output: talk
+Label: nothing -- Output: talk
+Label: nothing -- Output: talk
+Label: nothing -- Output: talk
+Label: nothing -- Output: talk
+Label: nothing -- Output: talk
+Label: nothing -- Output: talk
+Label: nothing -- Output: talk
+Label: nothing -- Output: talk
+Label: hide -- Output: talk
+Label: hide -- Output: talk
+Label: hide -- Output: talk
+Label: hide -- Output: talk
+Label: hide -- Output: talk
+Label: hide -- Output: talk
+Label: hide -- Output: talk
+Label: hide -- Output: talk
+Label: hide -- Output: talk
+Label: hide -- Output: talk
+Label: hide -- Output: talk
+Label: nothing -- Output: talk
+Label: nothing -- Output: talk
+Label: nothing -- Output: talk
+Label: nothing -- Output: talk
+Label: nothing -- Output: talk
+Label: nothing -- Output: talk
+Label: nothing -- Output: talk
+Label: nothing -- Output: talk
+Label: nothing -- Output: talk
+Label: nothing -- Output: talk
+Label: nothing -- Output: talk
+Label: nothing -- Output: talk
+Label: eat -- Output: talk
+Label: eat -- Output: talk
+Label: eat -- Output: talk
+Label: eat -- Output: talk
+Label: eat -- Output: talk
+Label: eat -- Output: talk
+Label: eat -- Output: talk
+Label: eat -- Output: talk
+Label: eat -- Output: talk
+Label: eat -- Output: talk
+Label: nothing -- Output: talk
+
+
+
+Total Number of correct guesses out of total time steps: 20 / 100
+Correct Guesses percentage: 20.00%

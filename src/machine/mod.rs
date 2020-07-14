@@ -12,6 +12,7 @@ use rand_distr::{Distribution, Normal};
 
 mod neuron;
 use neuron::Neuron;
+use neuron::CLUSTERS;
 
 use std::fs::File;
 use std::io::Write;
@@ -31,9 +32,11 @@ pub struct LSM {
     tau_m: u32,                         // time constant for membrane potential (ms)
     tau_c: u32,
     liq_weights: [i32; 4], // Fixed synaptic weights in the reservoir
-    r_weight_max: f32,     // The maximum weight between readout and reservoir
+    /*r_weight_max: f32,     // The maximum weight between readout and reservoir
     r_weight_min: f32,     // The minimum weight between readout and reservoir
-    d_weight: f32,
+    d_weight: f32,*/
+    readouts_c: Vec<Vec<Vec<f32>>>, // Each readout neuron's calcium values from each cluster at each time step
+    outputs: Vec<String>,           // The output of the LSM at any time step
 }
 
 impl LSM {
@@ -50,11 +53,13 @@ impl LSM {
             readout_weights: Vec::new(),
             input_layer: Vec::new(),
             tau_m: 32,
-            tau_c: 64,
+            tau_c: 18,
             liq_weights: [3, 6, -2, -2], // [EE, EI, IE, II]
-            r_weight_max: 8.,            // from weight-max calc
+            /*r_weight_max: 8.,            // from weight-max calc
             r_weight_min: -8.,           // from weight_min calc
             d_weight: 0.0002 * (2 as f32).powf(8. - 4.), // 0.0002 * 2 ^ (n_bits - 4) but scaled down
+            */readouts_c: Vec::new(),
+            outputs: Vec::new(),
         }
     }
 
@@ -537,7 +542,7 @@ impl LSM {
     fn set_input_weights(&mut self) {
         // Sets the weight of input for one neuron to be either -8 or 8
         // FROM Zhang et al 2015 pg 2645
-        let seed = [8; 32];
+        let seed = [10; 32];
         let mut rng = StdRng::from_seed(seed);
         let percentage = 0.8;
 
@@ -617,7 +622,8 @@ impl LSM {
     }
 
     // In readout_read, every time we change calcium, if it's above a threshold, we
-    // potentiate for one readout neuron. 
+    // potentiate for one readout neuron.
+    /*
     fn potentiate(&mut self, cluster_idx: usize, r_idx: usize, prob: f32) {
         // loop through its pre-syn neurons and increase the weights for them
         let seed = [9; 32];
@@ -645,6 +651,7 @@ impl LSM {
             }
         }
     }
+    */
 
     /*
     fn potentiate(&mut self, cluster_idx: usize, r_idx: usize, prob_plus: f32, prob_minus: f32, potentiate: bool) {
@@ -703,7 +710,14 @@ impl LSM {
         panic!("Model was chosen incorrectly");
     }
 
-    pub fn run(&mut self, input: &Vec<Vec<u32>>, model: &str, delay: i32, first_tau: u32) {
+    pub fn run(
+        &mut self,
+        input: &Vec<Vec<u32>>,
+        labels: &Vec<String>,
+        model: &str,
+        delay: i32,
+        first_tau: u32,
+    ) {
         // Updates voltage connections for all neurons in the LSM.
         // Implementation of Equation 14/20/21 in Zhang et al 2015
 
@@ -716,14 +730,36 @@ impl LSM {
 
         let mut f1 = File::create("output.txt").expect("Unable to create a file");
         let mut f2 = File::create("readout.txt").expect("Unable to create a file");
+        let mut f3 = File::create("guesses.txt").expect("Unable to create a file");
 
         self.set_spike_times(input);
 
         let input_time_steps: usize = input[0].len();
-        let n_time_steps = input_time_steps + delay as usize + 75;
-
+        let n_time_steps = input_time_steps + delay as usize;
+        // let mut
         // For every time step in all the time steps
         for t in 0..n_time_steps {
+            // Finding the t at which the label changes
+            // let curr_label: &String = &labels[t];
+            // if t > 0 && curr_label != &labels[t - 1] {}
+
+            // Which is the winner?
+            // 0 1 2 3 4 5 6 7 8
+            // n n n r r r n n n
+            // Assuming built in delay of 1
+            // starting - 4
+            // ending - 6
+            // A vector containing the output of the LSM from time steps 4 to 6
+            // e.g. <n, n, r> chooses n because that's the majority (NOT ANYMORE)
+            //
+            // Instead, we output per time instant and train as well.
+            //
+            // Each of these n's and r's from
+            // Train every ms
+            // LSM outputs n -> train
+            // LSM outputs n -> train
+            // LSM outputs r -> do
+
             // For every post synaptic neuron in the liquid
             for n_idx in 0..self.neurons.len() {
                 // If the neuron is in time out, then skip and update timeout
@@ -866,6 +902,52 @@ impl LSM {
             f1.write_all(format!("---------------------------------------------------------------------------------------------------------------------------------------------------------{}\n", t as i32 + delay).as_bytes()).expect("Unable to draw");
             self.readout_read(model, t, delay, first_tau, &mut f2);
         }
+
+        // This loop through the labels and compares it with the guesses
+        let mut total_correct: u32 = 0;
+        for idx in 0..labels.len() {
+            let label: &String = &labels[idx];
+            let output: &String = &self.outputs[idx + delay as usize];
+            // If the guess is correct
+            if label == output {
+                total_correct += 1;
+                f3.write_all(format!("Label: {} -- Output: {} ========================================> (CORRECT!)\n", label, output).as_bytes())
+                    .expect("Unable to write");
+            } else {
+                f3.write_all(format!("Label: {} -- Output: {}\n", label, output).as_bytes())
+                    .expect("Unable to write");
+            }
+        }
+
+        // Adds to the guesses.txt
+        f3.write_all(
+            format!(
+                "\n\n\nTotal Number of correct guesses out of total time steps: {} / {}",
+                total_correct,
+                labels.len()
+            )
+            .as_bytes(),
+        )
+        .expect("Unable to write");
+        f3.write_all(
+            format!(
+                "\nCorrect Guesses percentage: {:.2}%",
+                (total_correct as f32 / labels.len() as f32) * 100.
+            )
+            .as_bytes(),
+        )
+        .expect("Unable to write");
+
+        // Prints to screen important results
+        println!(
+            "\nTotal Number of correct guesses out of total time steps: {} / {}",
+            total_correct,
+            labels.len()
+        );
+        println!(
+            "Correct Guesses percentage: {:.2}%\n",
+            (total_correct as f32 / labels.len() as f32) * 100.
+        );
     }
 
     fn readout_read(
@@ -875,7 +957,7 @@ impl LSM {
         delay: i32,
         first_tau: u32,
         f: &mut File,
-        // label: 
+        // label:
     ) {
         // For each time step, we calculate from the neuron activity of the
         // reservoir and update the calcium / voltage of the readout neurons.
@@ -926,7 +1008,7 @@ impl LSM {
                 self.readouts[cluster_idx][r_idx].update_voltage(delta_v);
                 self.readouts[cluster_idx][r_idx].update_spike_times(curr_t);
                 self.readouts[cluster_idx][r_idx].update_calcium(delta_c);
-                self.readouts[cluster_idx][r_idx].update_calcium_desired(&inputs);
+                // self.readouts[cluster_idx][r_idx].update_calcium_desired(&inputs);
                 // self.update_calcium_desired();
 
                 // Writing to file!
@@ -953,12 +1035,62 @@ impl LSM {
                 }
             }
         }
+        self.readout_output();
         f.write_all(format!("---------------------------------------------------------------------------------------------------------------------------------------------------------{}\n", curr_t as i32 + delay).as_bytes()).expect("Unable to draw");
     }
 
+    fn readout_output(&mut self) {
+        // Updates the self.readouts_c with the current time step's calcium
+        // values from all of the readout neurons
+        let mut all_calciums: Vec<Vec<f32>> = Vec::new();
+        // For each cluster, push the readout neurons' calciums into a vector
+        // and the column of a matrix
+        for cluster_idx in 0..self.n_clusters {
+            let mut curr_readout_cluster: Vec<f32> = Vec::new();
+            for r_idx in 0..self.readouts[cluster_idx].len() {
+                curr_readout_cluster.push(self.readouts[cluster_idx][r_idx].get_calcium());
+            }
+            all_calciums.push(curr_readout_cluster);
+        }
+        self.readouts_c.push(all_calciums);
+
+        // Updates the self.outputs with the LSM's true output at the current
+        // time step. Go through each cluster, and find the column with the most
+        //
+        // readout neuron activity.
+        // ["talk", "hide", "run", "eat"]
+        let mut output_count: Vec<u32> = vec![0; self.n_clusters];
+        // For all the clusters at the current time step,
+        for cluster_idx in 0..self.n_clusters {
+            for r_idx in 0..self.readouts[cluster_idx].len() {
+                // If the calcium reaches a certain point for a given readout
+                // set, then increase that cluster_idx's output_count by 1
+                let curr_readout: &Neuron = &self.readouts[cluster_idx][r_idx];
+                if curr_readout.is_active() {
+                    output_count[curr_readout.get_cluster()] += 1;
+                }
+                // self.readouts_c[curr_time][cluster_idx][]
+            }
+        }
+        // Finds the most activated cluster and adds that to self.outputs for
+        // the current time step
+        let max_val: u32 = output_count.iter().max().unwrap().clone();
+        // If the less than half of the readouts get activated then the lsm guesses "nothing"
+        if max_val > (self.n_clusters / 2) as u32 {
+            let max_idx: usize = output_count.iter().position(|&i| i == max_val).unwrap();
+            self.outputs.push(CLUSTERS[max_idx].to_string());
+        } else {
+            self.outputs.push("nothing".to_string());
+        }
+    }
+
+    // Figure out output
+    // Set the c_d for all readouts
+    // Graph analysis
+
     // pub fn graph_anal(&self, readout: &mut Neuron) {
     //     // d - depress, p - potentiate, c_m - margin above / below c_th
-    //     // c_r 
+    //     // c_r
     //     //       |  N    |    N
     //     // c_m   |  d    |    p
     //     // c_th  |  d    |    p
@@ -972,11 +1104,9 @@ impl LSM {
 
     //     if readout.get_calcium_desired() > readout.get_calcium_threshold() {
     //         if self.c <= self.c_th + self.c_margin {
-                
     //         }
     //     }
     // }
-
 }
 
 // END OF FILE

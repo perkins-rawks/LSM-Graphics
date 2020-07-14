@@ -7,7 +7,8 @@ use nalgebra::geometry::Translation3;
 use std::fmt;
 
 static TYPES: [&str; 4] = ["in", "liq_in", "liq", "readout"]; // The three types of neurons in our LSM
-pub static NTS: [&str; 2] = ["exc", "inh"]; // types of neurotransmitters
+static NTS: [&str; 2] = ["exc", "inh"]; // types of neurotransmitters
+pub static CLUSTERS: [&str; 4] = ["talk", "hide", "run", "eat"];
 
 #[derive(Clone)]
 pub struct Neuron {
@@ -28,10 +29,10 @@ pub struct Neuron {
     spike_times: Vec<u32>, // The times at which a spike / neuron fire happens (an index of a 1 in a spike train)
     input_connect: usize, // The index of the input layer neuron this is connected to. (only if "liq_in")
     second_tau: [u32; 2], // Time constants for second order model for voltage
-    c: f32,                       // Calcium of a readout neuron
-    c_th: f32,                    // Calcium threshold for a readout neuron
-    c_d: f32,                     // Desired calcium of a readout neuron
-    c_margin: f32,                // Margin around the C threshold
+    c: f32,               // Calcium of a readout neuron
+    c_th: f32,            // Calcium threshold for a readout neuron
+    c_d: f32,             // Desired calcium of a readout neuron
+    c_margin: f32,        // Margin around the C threshold
 }
 
 impl fmt::Display for Neuron {
@@ -71,7 +72,7 @@ impl Neuron {
             spec: spec.to_string(),
             // n_t: n_t
             // input: input,
-            // read_out: read_out
+            // read_out: read_outn
             nt: "".to_string(), // neither exc nor inh
             cluster: cluster.to_string(),
             loc: Vector3::<f32>::new(0., 0., 0.),
@@ -100,6 +101,15 @@ impl Neuron {
 
     pub fn set_id(&mut self, id: usize) {
         self.id = id;
+    }
+
+    pub fn get_cluster(&self) -> usize {
+        for (idx, cluster) in CLUSTERS.iter().enumerate() {
+            if cluster.to_string() == self.cluster {
+                return idx;
+            }
+        }
+        panic!("self.cluster is not found in list of clusters");
     }
 
     pub fn get_obj(&mut self) -> &mut SceneNode {
@@ -189,12 +199,12 @@ impl Neuron {
         self.c += delta_c;
     }
 
-    pub fn set_calcium_desired(&mut self, new_c_d: f32) {
+    pub fn _set_calcium_desired(&mut self, new_c_d: f32) {
         // Moves parameter c_d
         self.c_d = new_c_d;
     }
 
-    pub fn get_calcium_desired(&self) {
+    pub fn _get_calcium_desired(&self) {
         &self.c_d;
     }
 
@@ -226,9 +236,11 @@ impl Neuron {
         self.second_tau = [tau_s1, tau_s2];
     }
 
-    pub fn update_calcium_desired(&self) {
-
+    pub fn is_active(&self) -> bool {
+        self.c > self.c_th
     }
+
+    pub fn _update_calcium_desired(&self) {}
 
     // // Temporary
     // pub fn update_calcium_desired (&mut self) {
