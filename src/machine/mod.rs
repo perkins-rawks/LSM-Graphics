@@ -53,12 +53,13 @@ impl LSM {
             readout_weights: Vec::new(),
             input_layer: Vec::new(),
             tau_m: 32,
-            tau_c: 18,
+            tau_c: 8,
             liq_weights: [3, 6, -2, -2], // [EE, EI, IE, II]
             /*r_weight_max: 8.,            // from weight-max calc
             r_weight_min: -8.,           // from weight_min calc
             d_weight: 0.0002 * (2 as f32).powf(8. - 4.), // 0.0002 * 2 ^ (n_bits - 4) but scaled down
-            */readouts_c: Vec::new(),
+            */
+            readouts_c: Vec::new(),
             outputs: Vec::new(),
         }
     }
@@ -305,7 +306,7 @@ impl LSM {
         let mut connect_lines: Vec<(Point3<f32>, Point3<f32>, Point3<f32>)> = Vec::new();
         let mut dist_list: Vec<f32> = Vec::new();
         // let mut rng = rand::thread_rng(); // some random number between 0 and 1 for computing probability
-        let seed = [0; 32];
+        let seed = [12; 32];
         let mut rng = StdRng::from_seed(seed);
         // rng.gen::<f32>() for generating a (fixed) random number
         for idx1 in 0..n_len {
@@ -420,7 +421,7 @@ impl LSM {
     fn make_readout_connects(&mut self) -> Vec<(Point3<f32>, Point3<f32>, Point3<f32>)> {
         // connect_lines: <(point 1, point 2, color), ... >
         let mut connect_lines: Vec<(Point3<f32>, Point3<f32>, Point3<f32>)> = Vec::new();
-        let seed = [8; 32];
+        let seed = [11; 32];
         let mut rng = StdRng::from_seed(seed);
 
         // Number of neurons in one cluster, assuming all clusters are equally sized
@@ -449,7 +450,7 @@ impl LSM {
                     // 'The neuron_idx % count' is to sort by cluster
                     // All readout weights are set to 1 at first
                     readout_weights[(readout_idx, neuron_idx % count)] =
-                        (rng.gen::<f32>() * 16.) - 8.;
+                        (rng.gen::<f32>() * 2.) - 1.;
                 }
             }
             self.readout_weights.push(readout_weights);
@@ -544,7 +545,7 @@ impl LSM {
         // FROM Zhang et al 2015 pg 2645
         let seed = [10; 32];
         let mut rng = StdRng::from_seed(seed);
-        let percentage = 0.8;
+        let percentage = self.e_ratio.clone();
 
         let weights = [-8, 8];
         for neuron in self.get_neurons().iter_mut() {
@@ -619,6 +620,18 @@ impl LSM {
             return 0.;
         }
         1.
+    }
+
+    fn delta_calcium(&self, n: i32) -> f32 {
+        // Kronecker / Dirac delta function
+        // A spike helper function
+        // It outputs 1 only at 0 (Dirac outputs infinity at 0)
+        // let seed = [13; 32];
+        // let mut rng = StdRng::from_seed(seed);
+        if n == 0 {
+            return 1. / 20.;
+        }
+        0.
     }
 
     // In readout_read, every time we change calcium, if it's above a threshold, we
@@ -735,7 +748,17 @@ impl LSM {
         self.set_spike_times(input);
 
         let input_time_steps: usize = input[0].len();
-        let n_time_steps = input_time_steps + delay as usize;
+
+        let additional_delay = {
+            let in_to_liq_delay = delay;
+            let zero_to_spike_delay = 3; // v_th / max_input = 20 /8
+            let liq_to_readout_delay = delay;
+            let margin = 1;
+            in_to_liq_delay + zero_to_spike_delay + liq_to_readout_delay + margin
+        };
+
+        //let add_delay = in_to_liq_delay + zero_to_spike_delay + liq_to_readout_delay + margin;
+        let n_time_steps = input_time_steps + (delay as usize + additional_delay as usize);
         // let mut
         // For every time step in all the time steps
         for t in 0..n_time_steps {
@@ -907,9 +930,13 @@ impl LSM {
         let mut total_correct: u32 = 0;
         for idx in 0..labels.len() {
             let label: &String = &labels[idx];
-            let output: &String = &self.outputs[idx + delay as usize];
+            let output: &String = &self.outputs[idx + (delay as usize + additional_delay as usize)];
             // If the guess is correct
-            if label == output {
+            if
+            /*label == output*/
+            (label == "nothing" && output == "nothing")
+                || (label != "nothing" && output != "nothing")
+            {
                 total_correct += 1;
                 f3.write_all(format!("Label: {} -- Output: {} ========================================> (CORRECT!)\n", label, output).as_bytes())
                     .expect("Unable to write");
@@ -1002,7 +1029,7 @@ impl LSM {
                         // let teacher_signal: f32 = injected_current(); MAYBE LATER
                         // delta_v += weight * model_calc + teacher_signal;
                         delta_v += weight * model_calc;
-                        delta_c += self.delta(curr_t as i32 - spike_time.clone() as i32);
+                        delta_c += self.delta_calcium(curr_t as i32 - spike_time.clone() as i32);
                     }
                 }
                 self.readouts[cluster_idx][r_idx].update_voltage(delta_v);
@@ -1075,8 +1102,10 @@ impl LSM {
         // Finds the most activated cluster and adds that to self.outputs for
         // the current time step
         let max_val: u32 = output_count.iter().max().unwrap().clone();
-        // If the less than half of the readouts get activated then the lsm guesses "nothing"
-        if max_val > (self.n_clusters / 2) as u32 {
+        // If the less than half of the readouts get activated then the lsm
+        // guesses "nothing"
+        // ASSUMING EACH CLUSTER HAS THE SAME AMOUNT OF READOUTS!!!
+        if max_val > (self.readouts[0].len() / 2) as u32 {
             let max_idx: usize = output_count.iter().position(|&i| i == max_val).unwrap();
             self.outputs.push(CLUSTERS[max_idx].to_string());
         } else {

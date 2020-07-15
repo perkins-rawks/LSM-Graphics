@@ -19,6 +19,7 @@
 
 use std::io::Write;
 use std::{fs, fs::File};
+use std::time::Instant;
 
 use kiss3d::camera::ArcBall;
 use kiss3d::event::{Action, Key, WindowEvent};
@@ -374,6 +375,7 @@ fn min_max(dists: &Vec<f32>) -> (f32, f32) {
 }
 
 fn main() {
+    let now = Instant::now();       // Time
     // Important Variables \\
     let mut window = Window::new("Liquid State Machine"); // For graphics display
     window.set_light(Light::StickToCamera); // Graphics settings
@@ -445,8 +447,9 @@ fn main() {
     assert_eq!(labels.len(), input[0].len()); // # of labels == # of columns
     let models = ["static", "first order", "second order"];
     let delay = 1;
-    let first_tau = 4;
-    l1.run(&input, &labels, models[1], delay, first_tau);
+    let first_tau = 0;
+    l1.run(&input, &labels, models[0], delay, first_tau);
+    println!("Time elapsed: {:.3} secs", now.elapsed().as_millis() as f64 / 1000.);
 
     // Rendering \\
     let axis_len = 10.0;

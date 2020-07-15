@@ -43,14 +43,14 @@ impl fmt::Display for Neuron {
         if self.spec == "readout".to_string() {
             write!(
                 f,
-                "Neuron: {{ id: {} -- type: \"{}\" -- nt: \"{}\" -- voltage: {} mV -- calcium: {} }}",
-                self.id, self.spec, self.nt, self.v, self.c
+                "Neuron: {{ id: {} -- type: \"{}\" -- nt: \"{}\" -- cluster: \"{}\" -- voltage: {} mV -- calcium: {} }}",
+                self.id, self.spec, self.nt, self.cluster, self.v, self.c
             )
         } else {
             write!(
                 f,
-                "Neuron: {{ id: {} -- type: \"{}\" -- nt: \"{}\" -- voltage: {} mV }}",
-                self.id, self.spec, self.nt, self.v
+                "Neuron: {{ id: {} -- type: \"{}\" -- nt: \"{}\" -- cluster: \"{}\" -- voltage: {} mV }}",
+                self.id, self.spec, self.nt, self.cluster, self.v
             )
         }
     }
