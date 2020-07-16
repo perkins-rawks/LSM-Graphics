@@ -30,13 +30,15 @@ pub struct LSM {
     readout_weights: Vec<DMatrix<f32>>, // List of all the plastic weights between readouts and reservoir
     input_layer: Vec<Neuron>,           // Set of neurons that read input outside the reservoir
     tau_m: u32,                         // time constant for membrane potential (ms)
-    tau_c: u32,
-    liq_weights: [i32; 4], // Fixed synaptic weights in the reservoir
-    /*r_weight_max: f32,     // The maximum weight between readout and reservoir
-    r_weight_min: f32,     // The minimum weight between readout and reservoir
-    d_weight: f32,*/
+    tau_c: u32,                         // Time constant for calcium decay
+    liq_weights: [i32; 4],              // Fixed synaptic weights in the reservoir
+    r_weight_max: f32,                  // The maximum weight between readout and reservoir
+    r_weight_min: f32,                  // The minimum weight between readout and reservoir
+    delta_weight: f32,
     readouts_c: Vec<Vec<Vec<f32>>>, // Each readout neuron's calcium values from each cluster at each time step
     outputs: Vec<String>,           // The output of the LSM at any time step
+    c_th: f32,                      // Calcium threshold for a readout neuron
+    c_margin: f32,                  // Margin around the Calcium threshold
 }
 
 impl LSM {
@@ -55,12 +57,13 @@ impl LSM {
             tau_m: 32,
             tau_c: 8,
             liq_weights: [3, 6, -2, -2], // [EE, EI, IE, II]
-            /*r_weight_max: 8.,            // from weight-max calc
+            r_weight_max: 8.,            // from weight-max calc
             r_weight_min: -8.,           // from weight_min calc
-            d_weight: 0.0002 * (2 as f32).powf(8. - 4.), // 0.0002 * 2 ^ (n_bits - 4) but scaled down
-            */
+            delta_weight: 0.0002 * (2 as f32).powf(8. - 4.), // 0.0002 * 2 ^ (n_bits - 4) but scaled down
             readouts_c: Vec::new(),
             outputs: Vec::new(),
+            c_th: 5.,
+            c_margin: 3.,
         }
     }
 
@@ -634,61 +637,6 @@ impl LSM {
         0.
     }
 
-    // In readout_read, every time we change calcium, if it's above a threshold, we
-    // potentiate for one readout neuron.
-    /*
-    fn potentiate(&mut self, cluster_idx: usize, r_idx: usize, prob: f32) {
-        // loop through its pre-syn neurons and increase the weights for them
-        let seed = [9; 32];
-        let mut rng = StdRng::from_seed(seed);
-        let weight_len = self.readout_weights[cluster_idx].len();
-        // readout_weights is a list of matrices representing the weights
-        // between neurons in the liquid and the readout neurons
-        for n_idx in 0..weight_len {
-            if rng.gen::<f32>() < prob {
-                self.readout_weights[cluster_idx][(r_idx, n_idx)] += self.d_weight;
-            }
-        }
-    }
-
-    fn depress(&mut self, cluster_idx: usize, r_idx: usize, prob: f32) {
-        // loop through its pre-syn neurons and increase the weights for them
-        let seed = [9; 32];
-        let mut rng = StdRng::from_seed(seed);
-        let weight_len = self.readout_weights[cluster_idx].len();
-        // readout_weights is a list of matrices representing the weights
-        // between neurons in the liquid and the readout neurons
-        for n_idx in 0..weight_len {
-            if rng.gen::<f32>() < prob {
-                self.readout_weights[cluster_idx][(r_idx, n_idx)] -= self.d_weight;
-            }
-        }
-    }
-    */
-
-    /*
-    fn potentiate(&mut self, cluster_idx: usize, r_idx: usize, prob_plus: f32, prob_minus: f32, potentiate: bool) {
-        // loop through its pre-syn neurons and increase the weights for them
-        let seed = [9; 32];
-        let mut rng = StdRng::from_seed(seed);
-        let weight_len = self.readout_weights[cluster_idx].len();
-        // readout_weights is a list of matrices representing the weights
-        // between neurons in the liquid and the readout neurons
-        for n_idx in 0..weight_len {
-            if potentiate {
-                if rng.gen::<f32>() < prob_plus {
-                    self.readout_weights[cluster_idx][(r_idx, n_idx)] += self.d_weight;
-                }
-            }
-            else {
-                if rng.gen::<f32>() < prob_minus {
-                    self.readout_weights[cluster_idx][(r_idx, n_idx)] -= self.d_weight;
-                }
-            }
-        }
-    }
-    */
-
     fn liq_response(
         &self,
         model: &str,
@@ -725,6 +673,7 @@ impl LSM {
 
     pub fn run(
         &mut self,
+        train: bool,
         input: &Vec<Vec<u32>>,
         labels: &Vec<String>,
         model: &str,
@@ -732,7 +681,7 @@ impl LSM {
         first_tau: u32,
     ) {
         // Updates voltage connections for all neurons in the LSM.
-        // Implementation of Equation 14/20/21 in Zhang et al 2015
+        // Implementation of Equation 14, 19, 20, 21 in Zhang et al 2015
 
         /*
           3 Different kinds of running:
@@ -762,27 +711,6 @@ impl LSM {
         // let mut
         // For every time step in all the time steps
         for t in 0..n_time_steps {
-            // Finding the t at which the label changes
-            // let curr_label: &String = &labels[t];
-            // if t > 0 && curr_label != &labels[t - 1] {}
-
-            // Which is the winner?
-            // 0 1 2 3 4 5 6 7 8
-            // n n n r r r n n n
-            // Assuming built in delay of 1
-            // starting - 4
-            // ending - 6
-            // A vector containing the output of the LSM from time steps 4 to 6
-            // e.g. <n, n, r> chooses n because that's the majority (NOT ANYMORE)
-            //
-            // Instead, we output per time instant and train as well.
-            //
-            // Each of these n's and r's from
-            // Train every ms
-            // LSM outputs n -> train
-            // LSM outputs n -> train
-            // LSM outputs r -> do
-
             // For every post synaptic neuron in the liquid
             for n_idx in 0..self.neurons.len() {
                 // If the neuron is in time out, then skip and update timeout
@@ -924,18 +852,40 @@ impl LSM {
             }
             f1.write_all(format!("---------------------------------------------------------------------------------------------------------------------------------------------------------{}\n", t as i32 + delay).as_bytes()).expect("Unable to draw");
             self.readout_read(model, t, delay, first_tau, &mut f2);
+            self.readout_output();
+
+            if train {
+                // Sets desired activity of each readout set based on input labels
+                self.set_c_d(&labels[t]);
+                // Trains based on the potentiation graph (Figure 6) in Zhang et
+                // al paper
+                self.graph_analysis(t);
+            }
+
+            // guesses are in self.outputs' most recent element
+            // Train based on this guess
         }
 
+        self.print_test_accuracy(&labels, &mut f3, delay, additional_delay);
+    }
+
+    fn print_test_accuracy(
+        &self,
+        labels: &Vec<String>,
+        f3: &mut File,
+        delay: i32,
+        additional_delay: i32,
+    ) {
         // This loop through the labels and compares it with the guesses
         let mut total_correct: u32 = 0;
         for idx in 0..labels.len() {
             let label: &String = &labels[idx];
             let output: &String = &self.outputs[idx + (delay as usize + additional_delay as usize)];
             // If the guess is correct
-            if
             /*label == output*/
-            (label == "nothing" && output == "nothing")
-                || (label != "nothing" && output != "nothing")
+            if label == output
+            /*(label == "nothing" && output == "nothing")
+            || (label != "nothing" && output != "nothing")*/
             {
                 total_correct += 1;
                 f3.write_all(format!("Label: {} -- Output: {} ========================================> (CORRECT!)\n", label, output).as_bytes())
@@ -984,7 +934,6 @@ impl LSM {
         delay: i32,
         first_tau: u32,
         f: &mut File,
-        // label:
     ) {
         // For each time step, we calculate from the neuron activity of the
         // reservoir and update the calcium / voltage of the readout neurons.
@@ -1062,7 +1011,6 @@ impl LSM {
                 }
             }
         }
-        self.readout_output();
         f.write_all(format!("---------------------------------------------------------------------------------------------------------------------------------------------------------{}\n", curr_t as i32 + delay).as_bytes()).expect("Unable to draw");
     }
 
@@ -1113,29 +1061,100 @@ impl LSM {
         }
     }
 
+    fn update_weights(&mut self, cluster_idx: usize, r_idx: usize, prob: f32, instruction: &str) {
+        assert_eq!(
+            instruction == "potentiate" || instruction == "depress",
+            true
+        );
+
+        // loop through its pre-syn neurons and increase the weights for them
+        // let seed = [13; 32];
+        // let mut rng = StdRng::from_seed(seed);
+        let mut rng = rand::thread_rng();
+        let n_count = self.n_total / self.n_clusters; // Number of neurons in 1 cluster
+                                                      // readout_weights is a list of matrices representing the weights
+                                                      // between neurons in the liquid and the readout neurons
+        for n_idx in 0..n_count {
+            if instruction == "potentiate" {
+                if rng.gen::<f32>() < prob {
+                    let sum = self.readout_weights[cluster_idx][(r_idx, n_idx)] + self.delta_weight;
+                    if sum < self.r_weight_max {
+                        self.readout_weights[cluster_idx][(r_idx, n_idx)] = sum;
+                    }
+                }
+            } else if instruction == "depress" {
+                if rng.gen::<f32>() < prob {
+                    let sum = self.readout_weights[cluster_idx][(r_idx, n_idx)] - self.delta_weight;
+                    if sum > self.r_weight_min {
+                        self.readout_weights[cluster_idx][(r_idx, n_idx)] = sum;
+                    }
+                }
+            }
+        }
+    }
+
+    fn set_c_d(&mut self, curr_label: &String) {
+        // This function happens in one time step.
+        // Check the current label in labels and set the c_d's in that cluster to a
+        // high number and the other clusters to a low c_d.
+        let high_c_d: usize = 10;
+        let low_c_d: usize = 0;
+
+        // Current label is the label from the input at this time step.
+
+        for cluster_idx in 0..self.n_clusters {
+            // For each readout set tied to a cluster
+            for r_idx in 0..self.readouts[cluster_idx].len() {
+                let current_cluster = CLUSTERS[self.readouts[cluster_idx][r_idx].get_cluster()];
+                if curr_label == current_cluster {
+                    // Set the neurons to have a high c_d
+                    self.readouts[cluster_idx][r_idx].set_calcium_desired(high_c_d as f32);
+                } else {
+                    // Set the neurons to have a low c_d
+                    self.readouts[cluster_idx][r_idx].set_calcium_desired(low_c_d as f32);
+                }
+            }
+        }
+    }
+
     // Figure out output
     // Set the c_d for all readouts
     // Graph analysis
 
-    // pub fn graph_anal(&self, readout: &mut Neuron) {
-    //     // d - depress, p - potentiate, c_m - margin above / below c_th
-    //     // c_r
-    //     //       |  N    |    N
-    //     // c_m   |  d    |    p
-    //     // c_th  |  d    |    p
-    //     // c_m   |  d    |    p
-    //     //       |  N    |    p
-    //     //       |_______________
-    //     //          c_th        c_d
-
-    //     let c: f32 = readout.get_calcium();
-    //     let c_d: f32 = readout.get_calcium_desired();
-
-    //     if readout.get_calcium_desired() > readout.get_calcium_threshold() {
-    //         if self.c <= self.c_th + self.c_margin {
-    //         }
-    //     }
-    // }
+    fn graph_analysis(&mut self, curr_t: usize) {
+        // For one time step, if the calcium is within a certain range of
+        // the threshold, then we potentiate weights.
+        // Otherwise, we depress weights.
+        // d - depress, p - potentiate, c_m - margin above / below c_th
+        // c_r
+        //              |  N    |    N
+        // c_th + c_m   |  d    |    p
+        // c_th         |  d    |    p
+        // c_th - c_m   |  d    |    p
+        //              |  N    |    p
+        //              |___________________
+        //              c_th      c_d
+        // For each readout neuron's calcium values, if it's within a range
+        // of the threshold, we potentiate.
+        let prob: f32 = 0.5; // Probability of Potentiation or depression
+        for cluster_idx in 0..self.n_clusters {
+            for r_idx in 0..self.readouts[cluster_idx].len() {
+                let c_r: f32 = self.readouts_c[curr_t][cluster_idx][r_idx];
+                let c_d: f32 = self.readouts[cluster_idx][r_idx].get_calcium_desired();
+                // Right half of x axis
+                if c_d > self.c_th {
+                    if c_r < self.c_th + self.c_margin {
+                        self.update_weights(cluster_idx, r_idx, prob, "potentiate");
+                    }
+                // Left
+                } else {
+                    if c_r > self.c_th - self.c_margin {
+                        self.update_weights(cluster_idx, r_idx, prob, "depress");
+                    }
+                }
+            }
+        }
+    }
 }
 
 // END OF FILE

@@ -18,8 +18,8 @@
 */
 
 use std::io::Write;
-use std::{fs, fs::File};
 use std::time::Instant;
+use std::{fs, fs::File};
 
 use kiss3d::camera::ArcBall;
 use kiss3d::event::{Action, Key, WindowEvent};
@@ -375,8 +375,8 @@ fn min_max(dists: &Vec<f32>) -> (f32, f32) {
 }
 
 fn main() {
-    let now = Instant::now();       // Time
-    // Important Variables \\
+    let now = Instant::now(); // Time
+                              // Important Variables \\
     let mut window = Window::new("Liquid State Machine"); // For graphics display
     window.set_light(Light::StickToCamera); // Graphics settings
     const N_CLUSTERS: usize = 4; // The number of clusters
@@ -414,6 +414,7 @@ fn main() {
 
     let cluster_locs: [Point3<f32>; N_CLUSTERS] = [c1, c2, c3, c4];
     let cluster_colors: [(f32, f32, f32); N_CLUSTERS] = [color1, color2, color3, color4];
+    // Try to keep it odd
     let n_readouts: [usize; N_CLUSTERS] = [5, 5, 5, 5]; // number of readout neurons per cluster
 
     assert_eq!(0, n % N_CLUSTERS);
@@ -442,14 +443,19 @@ fn main() {
     let dists = connects_data.1;
     let readout_lines = connects_data.2;
 
+    let train = true;
     let input = read_input();
     let labels = read_labels();
     assert_eq!(labels.len(), input[0].len()); // # of labels == # of columns
     let models = ["static", "first order", "second order"];
     let delay = 1;
     let first_tau = 0;
-    l1.run(&input, &labels, models[0], delay, first_tau);
-    println!("Time elapsed: {:.3} secs", now.elapsed().as_millis() as f64 / 1000.);
+    l1.run(train, &input, &labels, models[0], delay, first_tau);
+    l1.run(!train, &input, &labels, models[0], delay, first_tau);
+
+    let run_time = now.elapsed().as_millis() as f64 / 1000.;
+    println!("Time elapsed: {:.2} secs", run_time);
+    println!("Time elapsed: {:.2} mins", run_time / 60.);
 
     // Rendering \\
     let axis_len = 10.0;

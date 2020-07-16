@@ -1,6 +1,3 @@
-// use std::fs::File;
-// use std::io::Write;
-
 use kiss3d::scene::SceneNode;
 use nalgebra::base::Vector3;
 use nalgebra::geometry::Translation3;
@@ -30,13 +27,12 @@ pub struct Neuron {
     input_connect: usize, // The index of the input layer neuron this is connected to. (only if "liq_in")
     second_tau: [u32; 2], // Time constants for second order model for voltage
     c: f32,               // Calcium of a readout neuron
-    c_th: f32,            // Calcium threshold for a readout neuron
     c_d: f32,             // Desired calcium of a readout neuron
-    c_margin: f32,        // Margin around the C threshold
+    c_th: f32             // The Calcium threshold
 }
 
 impl fmt::Display for Neuron {
-    // Printing a Neuron \\
+    // Printing a Neuron \\ 
     // Formatter: '_ is a lifetime argument making it so that fmt lasts as long
     // as self
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -87,11 +83,8 @@ impl Neuron {
             time_out: 0,
             second_tau: [0, 0],
             c: 0.,
-            c_th: 5.,
             c_d: 0.,
-            c_margin: 3.,
-            //tau_m: 32,
-            //tau_c: 64,
+            c_th: 5.,
         }
     }
 
@@ -199,13 +192,13 @@ impl Neuron {
         self.c += delta_c;
     }
 
-    pub fn _set_calcium_desired(&mut self, new_c_d: f32) {
+    pub fn set_calcium_desired(&mut self, new_c_d: f32) {
         // Moves parameter c_d
         self.c_d = new_c_d;
     }
 
-    pub fn _get_calcium_desired(&self) {
-        &self.c_d;
+    pub fn get_calcium_desired(&self) -> f32 {
+        self.c_d.clone()
     }
 
     pub fn update_spike_times(&mut self, curr_t: usize) {
@@ -239,11 +232,4 @@ impl Neuron {
     pub fn is_active(&self) -> bool {
         self.c > self.c_th
     }
-
-    pub fn _update_calcium_desired(&self) {}
-
-    // // Temporary
-    // pub fn update_calcium_desired (&mut self) {
-    //     self.c_d = 3.*self.c_th;
-    // }
 }
