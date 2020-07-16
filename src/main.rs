@@ -18,7 +18,7 @@
 */
 
 use std::io::Write;
-use std::time::Instant;
+// use std::time::Instant;
 use std::{fs, fs::File};
 
 use kiss3d::camera::ArcBall;
@@ -45,7 +45,7 @@ const SP_ON: bool = true; // toggles each liquid neuron
 const READOUT_ON: bool = true; // toggles the readout neurons
 const RM_DIS_N: bool = true; // determines whether we want to remove neurons with no connections
 
-fn read_input() -> Vec<Vec<u32>> {
+fn _read_input() -> Vec<Vec<u32>> {
     // Read Perkins' input file (a list of spike trains)
     // This input is of the form where # rows > # columns
     // 0 0 0 1 1 0 0 1 0
@@ -70,7 +70,7 @@ fn read_input() -> Vec<Vec<u32>> {
     input
 }
 
-fn read_labels() -> Vec<String> {
+fn _read_labels() -> Vec<String> {
     // A label is a description of the action desired for each column of input.
     // Our file, labels.txt, is what we will use to supervise learning.
     let contents = fs::read_to_string("labels.txt").expect("Unable to read input file");
@@ -81,6 +81,59 @@ fn read_labels() -> Vec<String> {
     }
     labels
 }
+
+fn read_training_input() -> Vec<Vec<Vec<u32>>> {
+    // Read Perkins' input file (a list of spike trains)
+    // This input is of the form where # rows > # columns
+    // 0 0 0 1 1 0 0 1 0
+    // 0 1 0 1 1 0 1 0 1
+    // ...
+    // This function stores that in a list by column (assuming the file is transposed).
+    let mut input: Vec<Vec<Vec<u32>>> = Vec::new();
+    let mut train_batch: Vec<Vec<u32>> = Vec::new();
+
+    const RADIX: u32 = 10; // base 10
+    let contents = fs::read_to_string("train_input.txt").expect("Unable to read input file");
+    let contents: Vec<&str> = contents.split("\n").collect();
+
+    for line in contents.iter() {
+        let new_line = line.trim(); // Trims whitespace
+        if new_line == "#" {
+            input.push(train_batch);
+            train_batch = Vec::new();
+            continue;
+        }
+        let mut mini_input: Vec<u32> = Vec::new(); // One line
+        for character in new_line.chars() {
+            if character != ' ' {
+                // to_digit takes a number base
+                mini_input.push(character.to_digit(RADIX).unwrap());
+            }
+        }
+        train_batch.push(mini_input);
+    }
+    input
+}
+
+fn read_training_labels() -> Vec<Vec<String>> {
+    // A label is a description of the action desired for each column of input.
+    // Our file, labels.txt, is what we will use to supervise learning.
+    let contents = fs::read_to_string("train_labels.txt").expect("Unable to read input file");
+    let contents: Vec<&str> = contents.split("\n").collect();
+    let mut labels: Vec<Vec<String>> = Vec::new();
+    let mut train_batch: Vec<String> = Vec::new();
+    for line in contents.iter() {
+        let new_line = line.trim(); // Trims whitespace
+        if new_line == "#" {
+            labels.push(train_batch);
+            train_batch = Vec::new();
+            continue;
+        }
+        train_batch.push(new_line.to_string());
+    }
+    labels
+}
+
 
 fn render_lines(
     window: &mut Window,                                          // Our window
@@ -375,8 +428,8 @@ fn min_max(dists: &Vec<f32>) -> (f32, f32) {
 }
 
 fn main() {
-    let now = Instant::now(); // Time
-                              // Important Variables \\
+    // let now1 = Instant::now(); // Time
+    // Important Variables \\
     let mut window = Window::new("Liquid State Machine"); // For graphics display
     window.set_light(Light::StickToCamera); // Graphics settings
     const N_CLUSTERS: usize = 4; // The number of clusters
@@ -444,18 +497,36 @@ fn main() {
     let readout_lines = connects_data.2;
 
     let train = true;
-    let input = read_input();
-    let labels = read_labels();
-    assert_eq!(labels.len(), input[0].len()); // # of labels == # of columns
+    let epochs = 250;
+    // let input = read_input();
+    // let labels = read_labels();
+    let input = read_training_input();
+    let labels = read_training_labels();
+    assert_eq!(labels.len(), input.len()); // epochs
+    assert_eq!(labels[0].len(), input[0][0].len()); // # of labels == # of columns
     let models = ["static", "first order", "second order"];
     let delay = 1;
     let first_tau = 0;
-    l1.run(train, &input, &labels, models[0], delay, first_tau);
-    l1.run(!train, &input, &labels, models[0], delay, first_tau);
+    let mut f4 = File::create("epochs.txt").expect("Unable to create a file");
 
-    let run_time = now.elapsed().as_millis() as f64 / 1000.;
-    println!("Time elapsed: {:.2} secs", run_time);
-    println!("Time elapsed: {:.2} mins", run_time / 60.);
+    for epoch in 0..epochs {
+        l1.run(train, epoch, &mut f4, &input[epoch], &labels[epoch], models[0], delay, first_tau);
+        println!("Epoch {} finished", epoch);
+    }
+
+    for test in 995..1000 {
+        l1.run(!train, test, &mut f4, &input[0], &labels[0], models[0], delay, first_tau);
+    }
+
+    // let run_time1 = now1.elapsed().as_millis() as f64 / 1000.;
+    // println!("Time elapsed: {:.2} secs", run_time1);
+    // println!("Time elapsed: {:.2} mins", run_time1 / 60.);
+
+    // l1.run(!train, &input, &labels, models[0], delay, first_tau);
+
+    // let run_time2 = now2.elapsed().as_millis() as f64 / 1000.;
+    // println!("Time elapsed: {:.2} secs", run_time2);
+    // println!("Time elapsed: {:.2} mins", run_time2 / 60.);
 
     // Rendering \\
     let axis_len = 10.0;

@@ -16,6 +16,7 @@ use neuron::CLUSTERS;
 
 use std::fs::File;
 use std::io::Write;
+use std::time::Instant;
 
 pub struct LSM {
     // Big structure of clustered up neurons and connections
@@ -35,10 +36,11 @@ pub struct LSM {
     r_weight_max: f32,                  // The maximum weight between readout and reservoir
     r_weight_min: f32,                  // The minimum weight between readout and reservoir
     delta_weight: f32,
-    readouts_c: Vec<Vec<Vec<f32>>>, // Each readout neuron's calcium values from each cluster at each time step
-    outputs: Vec<String>,           // The output of the LSM at any time step
-    c_th: f32,                      // Calcium threshold for a readout neuron
-    c_margin: f32,                  // Margin around the Calcium threshold
+    readouts_c_r: Vec<Vec<Vec<f32>>>, // Each readout neuron's calcium values from each cluster at each time step
+    readouts_c_d: Vec<Vec<Vec<f32>>>, // Each readout neuron's desired calcium values from each cluster at each time step
+    outputs: Vec<String>,             // The output of the LSM at any time step
+    c_th: f32,                        // Calcium threshold for a readout neuron
+    c_margin: f32,                    // Margin around the Calcium threshold
 }
 
 impl LSM {
@@ -60,7 +62,8 @@ impl LSM {
             r_weight_max: 8.,            // from weight-max calc
             r_weight_min: -8.,           // from weight_min calc
             delta_weight: 0.0002 * (2 as f32).powf(8. - 4.), // 0.0002 * 2 ^ (n_bits - 4) but scaled down
-            readouts_c: Vec::new(),
+            readouts_c_r: Vec::new(),
+            readouts_c_d: Vec::new(),
             outputs: Vec::new(),
             c_th: 5.,
             c_margin: 3.,
@@ -674,6 +677,8 @@ impl LSM {
     pub fn run(
         &mut self,
         train: bool,
+        epoch: usize,
+        f4: &mut File,
         input: &Vec<Vec<u32>>,
         labels: &Vec<String>,
         model: &str,
@@ -690,6 +695,8 @@ impl LSM {
             o Reservoir to readout neurons
         */
 
+        let now = Instant::now();
+
         let mut f1 = File::create("output.txt").expect("Unable to create a file");
         let mut f2 = File::create("readout.txt").expect("Unable to create a file");
         let mut f3 = File::create("guesses.txt").expect("Unable to create a file");
@@ -698,16 +705,16 @@ impl LSM {
 
         let input_time_steps: usize = input[0].len();
 
-        let additional_delay = {
+        let additional_delay: i32 = {
             let in_to_liq_delay = delay;
             let zero_to_spike_delay = 3; // v_th / max_input = 20 /8
             let liq_to_readout_delay = delay;
             let margin = 1;
-            in_to_liq_delay + zero_to_spike_delay + liq_to_readout_delay + margin
+            in_to_liq_delay + zero_to_spike_delay + liq_to_readout_delay + margin + delay
         };
 
         //let add_delay = in_to_liq_delay + zero_to_spike_delay + liq_to_readout_delay + margin;
-        let n_time_steps = input_time_steps + (delay as usize + additional_delay as usize);
+        let n_time_steps = input_time_steps + (additional_delay as usize);
         // let mut
         // For every time step in all the time steps
         for t in 0..n_time_steps {
@@ -856,31 +863,39 @@ impl LSM {
 
             if train {
                 // Sets desired activity of each readout set based on input labels
-                self.set_c_d(&labels[t]);
+                if t < input_time_steps {
+                    self.set_c_d(&labels[t]);
+                }
                 // Trains based on the potentiation graph (Figure 6) in Zhang et
                 // al paper
-                self.graph_analysis(t);
+                if t > additional_delay as usize {
+                    self.graph_analysis(t, additional_delay as usize);
+                }
             }
 
             // guesses are in self.outputs' most recent element
             // Train based on this guess
         }
-
-        self.print_test_accuracy(&labels, &mut f3, delay, additional_delay);
+        // In mins
+        let run_time = now.elapsed().as_millis() as f64 / 1000. / 60.;
+        self.print_test_accuracy(epoch, &labels, &mut f3, f4, additional_delay, run_time);
     }
 
     fn print_test_accuracy(
         &self,
+        epoch: usize,
         labels: &Vec<String>,
         f3: &mut File,
-        delay: i32,
+        f4: &mut File,
         additional_delay: i32,
+        run_time: f64,
     ) {
+        f3.write_all(format!("Epoch {}", epoch).as_bytes()).expect("Unable to write");
         // This loop through the labels and compares it with the guesses
         let mut total_correct: u32 = 0;
         for idx in 0..labels.len() {
             let label: &String = &labels[idx];
-            let output: &String = &self.outputs[idx + (delay as usize + additional_delay as usize)];
+            let output: &String = &self.outputs[idx + additional_delay as usize];
             // If the guess is correct
             /*label == output*/
             if label == output
@@ -916,15 +931,29 @@ impl LSM {
         .expect("Unable to write");
 
         // Prints to screen important results
-        println!(
-            "\nTotal Number of correct guesses out of total time steps: {} / {}",
-            total_correct,
-            labels.len()
-        );
-        println!(
-            "Correct Guesses percentage: {:.2}%\n",
-            (total_correct as f32 / labels.len() as f32) * 100.
-        );
+        // println!(
+        //     "\nTotal Number of correct guesses out of total time steps: {} / {}",
+        //     total_correct,
+        //     labels.len()
+        // );
+        // println!(
+        //     "Correct Guesses percentage: {:.2}%\n",
+        //     (total_correct as f32 / labels.len() as f32) * 100.
+        // );
+        self.epoch_result(f4, total_correct, labels, epoch, run_time);
+    }
+
+    fn epoch_result(&self, f: &mut File, total_correct: u32, labels: &Vec<String>, epoch: usize, run_time: f64) {
+        f.write_all(
+            format!(
+                "Epoch {} => Runtime: {:.2} -- Guess Accuracy: {:.2}%\n",
+                epoch,
+                run_time,
+                (total_correct as f32 / labels.len() as f32) * 100.
+            )
+            .as_bytes(),
+        )
+        .expect("Unable to write");
     }
 
     fn readout_read(
@@ -1015,7 +1044,7 @@ impl LSM {
     }
 
     fn readout_output(&mut self) {
-        // Updates the self.readouts_c with the current time step's calcium
+        // Updates the self.readouts_c_r with the current time step's calcium
         // values from all of the readout neurons
         let mut all_calciums: Vec<Vec<f32>> = Vec::new();
         // For each cluster, push the readout neurons' calciums into a vector
@@ -1027,7 +1056,7 @@ impl LSM {
             }
             all_calciums.push(curr_readout_cluster);
         }
-        self.readouts_c.push(all_calciums);
+        self.readouts_c_r.push(all_calciums);
 
         // Updates the self.outputs with the LSM's true output at the current
         // time step. Go through each cluster, and find the column with the most
@@ -1044,7 +1073,7 @@ impl LSM {
                 if curr_readout.is_active() {
                     output_count[curr_readout.get_cluster()] += 1;
                 }
-                // self.readouts_c[curr_time][cluster_idx][]
+                // self.readouts_c_r[curr_time][cluster_idx][]
             }
         }
         // Finds the most activated cluster and adds that to self.outputs for
@@ -1100,10 +1129,12 @@ impl LSM {
         let high_c_d: usize = 10;
         let low_c_d: usize = 0;
 
-        // Current label is the label from the input at this time step.
-
+        // // Current label is the label from the input at this time step.
+        let mut all_calciums: Vec<Vec<f32>> = Vec::new();
+        // For each cluster, push the readout neurons' desired calciums into a vector
+        // and the column of a matrix
         for cluster_idx in 0..self.n_clusters {
-            // For each readout set tied to a cluster
+            let mut curr_readout_cluster: Vec<f32> = Vec::new();
             for r_idx in 0..self.readouts[cluster_idx].len() {
                 let current_cluster = CLUSTERS[self.readouts[cluster_idx][r_idx].get_cluster()];
                 if curr_label == current_cluster {
@@ -1113,15 +1144,18 @@ impl LSM {
                     // Set the neurons to have a low c_d
                     self.readouts[cluster_idx][r_idx].set_calcium_desired(low_c_d as f32);
                 }
+                curr_readout_cluster.push(self.readouts[cluster_idx][r_idx].get_calcium_desired());
             }
+            all_calciums.push(curr_readout_cluster);
         }
+        self.readouts_c_d.push(all_calciums);
     }
 
     // Figure out output
     // Set the c_d for all readouts
     // Graph analysis
 
-    fn graph_analysis(&mut self, curr_t: usize) {
+    fn graph_analysis(&mut self, curr_t: usize, additional_delay: usize) {
         // For one time step, if the calcium is within a certain range of
         // the threshold, then we potentiate weights.
         // Otherwise, we depress weights.
@@ -1139,8 +1173,8 @@ impl LSM {
         let prob: f32 = 0.5; // Probability of Potentiation or depression
         for cluster_idx in 0..self.n_clusters {
             for r_idx in 0..self.readouts[cluster_idx].len() {
-                let c_r: f32 = self.readouts_c[curr_t][cluster_idx][r_idx];
-                let c_d: f32 = self.readouts[cluster_idx][r_idx].get_calcium_desired();
+                let c_r: f32 = self.readouts_c_r[curr_t][cluster_idx][r_idx];
+                let c_d: f32 = self.readouts_c_d[curr_t - additional_delay][cluster_idx][r_idx];
                 // Right half of x axis
                 if c_d > self.c_th {
                     if c_r < self.c_th + self.c_margin {
