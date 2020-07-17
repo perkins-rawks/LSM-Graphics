@@ -1,3 +1,1 @@
-
-Epoch 0 => Runtime: 1.7675833333333335 -- Correct Guesses percentage: 53.00%
-Epoch 1 => Runtime: 6.328216666666666 -- Correct Guesses percentage: 49.20%
+Epoch 0 => Runtime: 1.94 -- Guess Accuracy: 47.20%

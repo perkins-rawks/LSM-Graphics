@@ -134,7 +134,6 @@ fn read_training_labels() -> Vec<Vec<String>> {
     labels
 }
 
-
 fn render_lines(
     window: &mut Window,                                          // Our window
     axis_len: f32,                                                // The length of the axis lines
@@ -509,13 +508,40 @@ fn main() {
     let first_tau = 0;
     let mut f4 = File::create("epochs.txt").expect("Unable to create a file");
 
+    // println!("\nFIRST ONE AFTER RESET IS IMPLEMENTED\n");
+    // println!("\nDELTA WEIGHT IS INCREASED TO THE POWER OF 12 FROM 8\n");
+    // println!("\nREADOUTS TAKE TIME OUTS AFTER SPIKE; DELTA CALCIUM IS 1 / 10\n");
+    println!("\nRESET 2.0 (PRINTING SPIKE TIMES)\n");
     for epoch in 0..epochs {
-        l1.run(train, epoch, &mut f4, &input[epoch], &labels[epoch], models[0], delay, first_tau);
+        println!("Running epoch {} ...", epoch);
+        l1.run(
+            train,
+            epoch,
+            &mut f4,
+            &input[epoch],
+            &labels[epoch],
+            models[0],
+            delay,
+            first_tau,
+        );
+        l1.reset();
         println!("Epoch {} finished", epoch);
     }
 
     for test in 995..1000 {
-        l1.run(!train, test, &mut f4, &input[0], &labels[0], models[0], delay, first_tau);
+        println!("Running test {} ...", test);
+        l1.run(
+            !train,
+            test,
+            &mut f4,
+            &input[test - 995],
+            &labels[test - 995],
+            models[0],
+            delay,
+            first_tau,
+        );
+        l1.reset();
+        println!("Test {} finished", test);
     }
 
     // let run_time1 = now1.elapsed().as_millis() as f64 / 1000.;

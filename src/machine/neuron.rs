@@ -183,6 +183,10 @@ impl Neuron {
         self.v += delta_v;
     }
 
+    pub fn set_voltage(&mut self, voltage: f32) {
+        self.v = voltage;
+    }
+
     pub fn get_calcium(&self) -> f32 {
         self.c.clone()
     }
@@ -190,6 +194,10 @@ impl Neuron {
     pub fn update_calcium(&mut self, delta_c: f32) {
         // Moves the calcium value
         self.c += delta_c;
+    }
+
+    pub fn set_calcium(&mut self, calcium: f32) {
+        self.c = calcium;
     }
 
     pub fn set_calcium_desired(&mut self, new_c_d: f32) {
@@ -205,7 +213,7 @@ impl Neuron {
         // Updates the spike times based on voltage. \\
         // If the current voltage is greater than threshold,
         // add the spike time to self attribute and update voltage
-        if self.v_th < self.v {
+        if self.v > self.v_th {
             self.spike_times.push(curr_t as u32);
             self.time_out = self.refrac_period;
             self.v = -5.; // so that it's harder to spike after resting
@@ -219,6 +227,10 @@ impl Neuron {
     pub fn update_time_out(&mut self) {
         assert_eq!(self.time_out > 0, true);
         self.time_out -= 1;
+    }
+
+    pub fn set_time_out(&mut self, time_out: u32) {
+        self.time_out = time_out;
     }
 
     pub fn get_second_tau(&self) -> &[u32; 2] {

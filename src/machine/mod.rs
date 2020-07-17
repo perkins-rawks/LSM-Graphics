@@ -61,7 +61,7 @@ impl LSM {
             liq_weights: [3, 6, -2, -2], // [EE, EI, IE, II]
             r_weight_max: 8.,            // from weight-max calc
             r_weight_min: -8.,           // from weight_min calc
-            delta_weight: 0.0002 * (2 as f32).powf(8. - 4.), // 0.0002 * 2 ^ (n_bits - 4) but scaled down
+            delta_weight: 0.0002 * (2 as f32).powf(12. - 4.), // 0.0002 * 2 ^ (n_bits - 4) but scaled down
             readouts_c_r: Vec::new(),
             readouts_c_d: Vec::new(),
             outputs: Vec::new(),
@@ -635,7 +635,7 @@ impl LSM {
         // let seed = [13; 32];
         // let mut rng = StdRng::from_seed(seed);
         if n == 0 {
-            return 1. / 20.;
+            return 1. / 10.;
         }
         0.
     }
@@ -699,7 +699,6 @@ impl LSM {
 
         let mut f1 = File::create("output.txt").expect("Unable to create a file");
         let mut f2 = File::create("readout.txt").expect("Unable to create a file");
-        let mut f3 = File::create("guesses.txt").expect("Unable to create a file");
 
         self.set_spike_times(input);
 
@@ -876,9 +875,42 @@ impl LSM {
             // guesses are in self.outputs' most recent element
             // Train based on this guess
         }
+        let mut f3 = File::create("guesses.txt").expect("Unable to create a file");
         // In mins
         let run_time = now.elapsed().as_millis() as f64 / 1000. / 60.;
         self.print_test_accuracy(epoch, &labels, &mut f3, f4, additional_delay, run_time);
+    }
+
+    pub fn reset(&mut self) {
+        // Loop through Input layer
+        for input_idx in 0..self.n_inputs {
+            self.input_layer[input_idx].set_spike_times(Vec::new());
+            // self.input_layer[input_idx].set_time_out(0);
+            // self.input_layer[input_idx].set_voltage(0.);
+            // self.input_layer[input_idx].set_calcium(0.);
+        }
+
+        // Loop through Liquid
+        for n_idx in 0..self.n_total {
+            self.neurons[n_idx].set_spike_times(Vec::new());
+            self.neurons[n_idx].set_time_out(0);
+            self.neurons[n_idx].set_voltage(0.);
+            self.neurons[n_idx].set_calcium(0.);
+        }
+
+        // Loop through Readouts
+        for cluster_idx in 0..self.n_clusters {
+            for r_idx in 0..self.readouts[cluster_idx].len() {
+                self.readouts[cluster_idx][r_idx].set_spike_times(Vec::new());
+                self.readouts[cluster_idx][r_idx].set_time_out(0);
+                self.readouts[cluster_idx][r_idx].set_voltage(0.);
+                self.readouts[cluster_idx][r_idx].set_calcium(0.);
+            }
+        }
+
+        self.readouts_c_r = Vec::new();
+        self.readouts_c_d = Vec::new();
+        self.outputs = Vec::new();
     }
 
     fn print_test_accuracy(
@@ -890,7 +922,8 @@ impl LSM {
         additional_delay: i32,
         run_time: f64,
     ) {
-        f3.write_all(format!("Epoch {}", epoch).as_bytes()).expect("Unable to write");
+        f3.write_all(format!("Epoch {}", epoch).as_bytes())
+            .expect("Unable to write");
         // This loop through the labels and compares it with the guesses
         let mut total_correct: u32 = 0;
         for idx in 0..labels.len() {
@@ -943,7 +976,14 @@ impl LSM {
         self.epoch_result(f4, total_correct, labels, epoch, run_time);
     }
 
-    fn epoch_result(&self, f: &mut File, total_correct: u32, labels: &Vec<String>, epoch: usize, run_time: f64) {
+    fn epoch_result(
+        &self,
+        f: &mut File,
+        total_correct: u32,
+        labels: &Vec<String>,
+        epoch: usize,
+        run_time: f64,
+    ) {
         f.write_all(
             format!(
                 "Epoch {} => Runtime: {:.2} -- Guess Accuracy: {:.2}%\n",
@@ -974,6 +1014,11 @@ impl LSM {
         for cluster_idx in 0..self.n_clusters {
             // For each readout neuron
             for r_idx in 0..self.readouts[cluster_idx].len() {
+                if self.readouts[cluster_idx][r_idx].get_time_out() > 0 {
+                    self.readouts[cluster_idx][r_idx].update_time_out();
+                    continue;
+                }
+
                 let curr_readout: &Neuron = &self.readouts[cluster_idx][r_idx];
                 let mut delta_v: f32 = -curr_readout.get_voltage() / (self.tau_m as f32);
                 let mut delta_c: f32 = -curr_readout.get_calcium() / (self.tau_c as f32);
@@ -990,6 +1035,18 @@ impl LSM {
                     // if spike_times.len() != 0 {
                     //     println!("Spike times: {:?}, Curr_time: {}", spike_times, curr_t);
                     // }
+                    if spike_times.len() != 0 {
+                        f.write_all(
+                            format!(
+                                "Spike times of Neuron {}: {:?}\n",
+                                self.neurons[n_idx].get_id(),
+                                spike_times
+                            )
+                            .as_bytes(),
+                        )
+                        .expect("Unable to write");
+                    }
+
                     for spike_time in spike_times.iter() {
                         // Update voltage and calcium (a la equation 14, 21 in Zhang et al)
 
@@ -1006,6 +1063,20 @@ impl LSM {
                         );
                         // let teacher_signal: f32 = injected_current(); MAYBE LATER
                         // delta_v += weight * model_calc + teacher_signal;
+                        if model_calc != 0. {
+                            f.write_all(
+                                format!(
+                                    "Neuron {}, Spike time {}: Delta voltage increment:[ w: {}, m_c: {}, d_v: {} ]\n",
+                                    self.neurons[n_idx].get_id(),
+                                    spike_time,
+                                    weight,
+                                    model_calc,
+                                    weight * model_calc
+                                )
+                                .as_bytes(),
+                            )
+                            .expect("Unable to write");
+                        }
                         delta_v += weight * model_calc;
                         delta_c += self.delta_calcium(curr_t as i32 - spike_time.clone() as i32);
                     }
