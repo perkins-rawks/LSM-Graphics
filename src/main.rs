@@ -496,6 +496,7 @@ fn main() {
     let readout_lines = connects_data.2;
 
     let train = true;
+    // let epochs = 250;
     let epochs = 250;
     // let input = read_input();
     // let labels = read_labels();
@@ -506,17 +507,22 @@ fn main() {
     let models = ["static", "first order", "second order"];
     let delay = 1;
     let first_tau = 0;
+    let mut f1 = File::create("output.txt").expect("Unable to create a file");
+    let mut f2 = File::create("readout.txt").expect("Unable to create a file");
+    let mut f3 = File::create("guesses.txt").expect("Unable to create a file");
     let mut f4 = File::create("epochs.txt").expect("Unable to create a file");
 
     // println!("\nFIRST ONE AFTER RESET IS IMPLEMENTED\n");
-    // println!("\nDELTA WEIGHT IS INCREASED TO THE POWER OF 12 FROM 8\n");
     // println!("\nREADOUTS TAKE TIME OUTS AFTER SPIKE; DELTA CALCIUM IS 1 / 10\n");
-    println!("\nRESET 2.0 (PRINTING SPIKE TIMES)\n");
+    println!("\nWINNER TAKE ALL\n");
     for epoch in 0..epochs {
         println!("Running epoch {} ...", epoch);
         l1.run(
             train,
             epoch,
+            &mut f1,
+            &mut f2,
+            &mut f3,
             &mut f4,
             &input[epoch],
             &labels[epoch],
@@ -526,23 +532,40 @@ fn main() {
         );
         l1.reset();
         println!("Epoch {} finished", epoch);
+        f1.write_all(format!("\nEpoch {} finished\n\n\n", epoch).as_bytes())
+            .expect("Unable to write");
+        f2.write_all(format!("\nEpoch {} finished\n\n\n", epoch).as_bytes())
+            .expect("Unable to write");
+        f3.write_all(format!("\nEpoch {} finished\n\n\n", epoch).as_bytes())
+            .expect("Unable to write");
     }
 
+    /*
     for test in 995..1000 {
         println!("Running test {} ...", test);
         l1.run(
-            !train,
+            train,
             test,
+            &mut f1,
+            &mut f2,
+            &mut f3,
             &mut f4,
-            &input[test - 995],
-            &labels[test - 995],
+            &input[test],
+            &labels[test],
             models[0],
             delay,
             first_tau,
         );
         l1.reset();
         println!("Test {} finished", test);
+        f1.write_all(format!("\nTest {} finished\n\n\n", test).as_bytes())
+            .expect("Unable to write");
+        f2.write_all(format!("\nTest {} finished\n\n\n", test).as_bytes())
+            .expect("Unable to write");
+        f3.write_all(format!("\nTest {} finished\n\n\n", test).as_bytes())
+            .expect("Unable to write");
     }
+    */
 
     // let run_time1 = now1.elapsed().as_millis() as f64 / 1000.;
     // println!("Time elapsed: {:.2} secs", run_time1);
