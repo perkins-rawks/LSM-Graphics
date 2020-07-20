@@ -1,1 +1,614 @@
-Epoch 0 => Runtime: 1.94 -- Guess Accuracy: 47.20%
+Epoch 0 => Guess Accuracy: 60.00%
+Percentage correct[ Talk: NaN%, Hide: 29.41%, Run: NaN%, Eat: NaN%, Nothing: 91.84% ]
+Epoch 1 => Guess Accuracy: 66.00%
+Percentage correct[ Talk: 15.79%, Hide: 58.54%, Run: NaN%, Eat: NaN%, Nothing: 97.50% ]
+Epoch 2 => Guess Accuracy: 53.00%
+Percentage correct[ Talk: 18.92%, Hide: 21.05%, Run: NaN%, Eat: NaN%, Nothing: 95.45% ]
+Epoch 3 => Guess Accuracy: 29.00%
+Percentage correct[ Talk: 2.99%, Hide: NaN%, Run: NaN%, Eat: NaN%, Nothing: 81.82% ]
+Epoch 4 => Guess Accuracy: 53.00%
+Percentage correct[ Talk: 0.00%, Hide: 52.50%, Run: NaN%, Eat: NaN%, Nothing: 86.49% ]
+Epoch 5 => Guess Accuracy: 27.00%
+Percentage correct[ Talk: 0.00%, Hide: NaN%, Run: NaN%, Eat: NaN%, Nothing: 90.00% ]
+Epoch 6 => Guess Accuracy: 62.00%
+Percentage correct[ Talk: NaN%, Hide: 33.93%, Run: NaN%, Eat: NaN%, Nothing: 97.73% ]
+Epoch 7 => Guess Accuracy: 75.00%
+Percentage correct[ Talk: NaN%, Hide: 60.00%, Run: NaN%, Eat: NaN%, Nothing: 93.33% ]
+Epoch 8 => Guess Accuracy: 61.00%
+Percentage correct[ Talk: NaN%, Hide: 40.00%, Run: NaN%, Eat: NaN%, Nothing: 92.50% ]
+Epoch 9 => Guess Accuracy: 53.00%
+Percentage correct[ Talk: 2.44%, Hide: 77.78%, Run: NaN%, Eat: NaN%, Nothing: 92.68% ]
+Epoch 10 => Guess Accuracy: 69.00%
+Percentage correct[ Talk: NaN%, Hide: 57.14%, Run: NaN%, Eat: NaN%, Nothing: 96.67% ]
+Epoch 11 => Guess Accuracy: 47.00%
+Percentage correct[ Talk: 0.00%, Hide: 60.00%, Run: NaN%, Eat: NaN%, Nothing: 94.12% ]
+Epoch 12 => Guess Accuracy: 36.00%
+Percentage correct[ Talk: 0.00%, Hide: NaN%, Run: NaN%, Eat: NaN%, Nothing: 85.71% ]
+Epoch 13 => Guess Accuracy: 69.00%
+Percentage correct[ Talk: 12.50%, Hide: 50.00%, Run: NaN%, Eat: NaN%, Nothing: 92.31% ]
+Epoch 14 => Guess Accuracy: 40.00%
+Percentage correct[ Talk: 1.82%, Hide: NaN%, Run: NaN%, Eat: NaN%, Nothing: 86.67% ]
+Epoch 15 => Guess Accuracy: 61.00%
+Percentage correct[ Talk: 20.00%, Hide: 34.15%, Run: NaN%, Eat: NaN%, Nothing: 100.00% ]
+Epoch 16 => Guess Accuracy: 39.00%
+Percentage correct[ Talk: 0.00%, Hide: 31.82%, Run: NaN%, Eat: NaN%, Nothing: 82.05% ]
+Epoch 17 => Guess Accuracy: 63.00%
+Percentage correct[ Talk: NaN%, Hide: 31.91%, Run: NaN%, Eat: NaN%, Nothing: 90.57% ]
+Epoch 18 => Guess Accuracy: 72.00%
+Percentage correct[ Talk: NaN%, Hide: 44.90%, Run: NaN%, Eat: NaN%, Nothing: 98.04% ]
+Epoch 19 => Guess Accuracy: 41.00%
+Percentage correct[ Talk: 10.00%, Hide: 23.08%, Run: NaN%, Eat: NaN%, Nothing: 93.55% ]
+Epoch 20 => Guess Accuracy: 38.00%
+Percentage correct[ Talk: 0.00%, Hide: 58.33%, Run: NaN%, Eat: NaN%, Nothing: 66.67% ]
+Epoch 21 => Guess Accuracy: 58.00%
+Percentage correct[ Talk: NaN%, Hide: 24.07%, Run: NaN%, Eat: NaN%, Nothing: 97.83% ]
+Epoch 22 => Guess Accuracy: 44.00%
+Percentage correct[ Talk: 0.00%, Hide: 44.44%, Run: NaN%, Eat: NaN%, Nothing: 87.80% ]
+Epoch 23 => Guess Accuracy: 40.00%
+Percentage correct[ Talk: 5.13%, Hide: 0.00%, Run: NaN%, Eat: NaN%, Nothing: 79.17% ]
+Epoch 24 => Guess Accuracy: 66.00%
+Percentage correct[ Talk: 20.00%, Hide: 48.72%, Run: NaN%, Eat: NaN%, Nothing: 95.65% ]
+Epoch 25 => Guess Accuracy: 64.00%
+Percentage correct[ Talk: 44.44%, Hide: 47.50%, Run: NaN%, Eat: NaN%, Nothing: 88.10% ]
+Epoch 26 => Guess Accuracy: 37.00%
+Percentage correct[ Talk: 6.78%, Hide: NaN%, Run: NaN%, Eat: NaN%, Nothing: 80.49% ]
+Epoch 27 => Guess Accuracy: 48.00%
+Percentage correct[ Talk: NaN%, Hide: 23.81%, Run: NaN%, Eat: NaN%, Nothing: 89.19% ]
+Epoch 28 => Guess Accuracy: 52.00%
+Percentage correct[ Talk: 0.00%, Hide: 100.00%, Run: NaN%, Eat: NaN%, Nothing: 83.72% ]
+Epoch 29 => Guess Accuracy: 47.00%
+Percentage correct[ Talk: NaN%, Hide: 32.81%, Run: NaN%, Eat: NaN%, Nothing: 72.22% ]
+Epoch 30 => Guess Accuracy: 38.00%
+Percentage correct[ Talk: 14.29%, Hide: 29.17%, Run: NaN%, Eat: NaN%, Nothing: 73.53% ]
+Epoch 31 => Guess Accuracy: 65.00%
+Percentage correct[ Talk: 0.00%, Hide: 34.15%, Run: NaN%, Eat: NaN%, Nothing: 94.44% ]
+Epoch 32 => Guess Accuracy: 44.00%
+Percentage correct[ Talk: 20.00%, Hide: 31.71%, Run: NaN%, Eat: NaN%, Nothing: 86.21% ]
+Epoch 33 => Guess Accuracy: 59.00%
+Percentage correct[ Talk: 25.00%, Hide: 60.00%, Run: NaN%, Eat: NaN%, Nothing: 88.89% ]
+Epoch 34 => Guess Accuracy: 37.00%
+Percentage correct[ Talk: 0.00%, Hide: 18.18%, Run: NaN%, Eat: NaN%, Nothing: 82.50% ]
+Epoch 35 => Guess Accuracy: 65.00%
+Percentage correct[ Talk: 30.77%, Hide: 43.90%, Run: NaN%, Eat: NaN%, Nothing: 93.48% ]
+Epoch 36 => Guess Accuracy: 35.00%
+Percentage correct[ Talk: 0.00%, Hide: 44.44%, Run: NaN%, Eat: NaN%, Nothing: 76.00% ]
+Epoch 37 => Guess Accuracy: 71.00%
+Percentage correct[ Talk: NaN%, Hide: 51.67%, Run: NaN%, Eat: NaN%, Nothing: 100.00% ]
+Epoch 38 => Guess Accuracy: 50.00%
+Percentage correct[ Talk: 0.00%, Hide: 43.59%, Run: NaN%, Eat: NaN%, Nothing: 84.62% ]
+Epoch 39 => Guess Accuracy: 41.00%
+Percentage correct[ Talk: 8.77%, Hide: NaN%, Run: NaN%, Eat: NaN%, Nothing: 83.72% ]
+Epoch 40 => Guess Accuracy: 46.00%
+Percentage correct[ Talk: 4.88%, Hide: 0.00%, Run: NaN%, Eat: NaN%, Nothing: 84.62% ]
+Epoch 41 => Guess Accuracy: 57.00%
+Percentage correct[ Talk: 12.50%, Hide: 88.24%, Run: NaN%, Eat: NaN%, Nothing: 86.05% ]
+Epoch 42 => Guess Accuracy: 71.00%
+Percentage correct[ Talk: 0.00%, Hide: 66.67%, Run: NaN%, Eat: NaN%, Nothing: 84.91% ]
+Epoch 43 => Guess Accuracy: 56.00%
+Percentage correct[ Talk: 31.71%, Hide: 39.13%, Run: NaN%, Eat: NaN%, Nothing: 94.44% ]
+Epoch 44 => Guess Accuracy: 47.00%
+Percentage correct[ Talk: 17.24%, Hide: NaN%, Run: NaN%, Eat: NaN%, Nothing: 88.10% ]
+Epoch 45 => Guess Accuracy: 62.00%
+Percentage correct[ Talk: NaN%, Hide: 50.00%, Run: NaN%, Eat: NaN%, Nothing: 83.33% ]
+Epoch 46 => Guess Accuracy: 77.00%
+Percentage correct[ Talk: NaN%, Hide: 58.93%, Run: NaN%, Eat: NaN%, Nothing: 100.00% ]
+Epoch 47 => Guess Accuracy: 50.00%
+Percentage correct[ Talk: NaN%, Hide: 18.97%, Run: NaN%, Eat: NaN%, Nothing: 92.86% ]
+Epoch 48 => Guess Accuracy: 32.00%
+Percentage correct[ Talk: 0.00%, Hide: NaN%, Run: NaN%, Eat: NaN%, Nothing: 82.05% ]
+Epoch 49 => Guess Accuracy: 37.00%
+Percentage correct[ Talk: 11.11%, Hide: NaN%, Run: NaN%, Eat: NaN%, Nothing: 81.08% ]
+Epoch 50 => Guess Accuracy: 51.00%
+Percentage correct[ Talk: 17.86%, Hide: 44.74%, Run: NaN%, Eat: NaN%, Nothing: 85.29% ]
+Epoch 51 => Guess Accuracy: 49.00%
+Percentage correct[ Talk: 5.00%, Hide: 66.67%, Run: NaN%, Eat: NaN%, Nothing: 84.62% ]
+Epoch 52 => Guess Accuracy: 28.00%
+Percentage correct[ Talk: 0.00%, Hide: NaN%, Run: NaN%, Eat: NaN%, Nothing: 77.78% ]
+Epoch 53 => Guess Accuracy: 44.00%
+Percentage correct[ Talk: 5.56%, Hide: NaN%, Run: NaN%, Eat: NaN%, Nothing: 89.13% ]
+Epoch 54 => Guess Accuracy: 67.00%
+Percentage correct[ Talk: NaN%, Hide: 41.82%, Run: NaN%, Eat: NaN%, Nothing: 97.78% ]
+Epoch 55 => Guess Accuracy: 55.00%
+Percentage correct[ Talk: NaN%, Hide: 36.67%, Run: NaN%, Eat: NaN%, Nothing: 82.50% ]
+Epoch 56 => Guess Accuracy: 36.00%
+Percentage correct[ Talk: 0.00%, Hide: NaN%, Run: NaN%, Eat: NaN%, Nothing: 75.00% ]
+Epoch 57 => Guess Accuracy: 44.00%
+Percentage correct[ Talk: 17.50%, Hide: 23.81%, Run: NaN%, Eat: NaN%, Nothing: 82.05% ]
+Epoch 58 => Guess Accuracy: 55.00%
+Percentage correct[ Talk: NaN%, Hide: 33.33%, Run: NaN%, Eat: NaN%, Nothing: 97.06% ]
+Epoch 59 => Guess Accuracy: 43.00%
+Percentage correct[ Talk: 3.64%, Hide: NaN%, Run: NaN%, Eat: NaN%, Nothing: 91.11% ]
+Epoch 60 => Guess Accuracy: 33.00%
+Percentage correct[ Talk: 1.64%, Hide: NaN%, Run: NaN%, Eat: NaN%, Nothing: 82.05% ]
+Epoch 61 => Guess Accuracy: 44.00%
+Percentage correct[ Talk: 0.00%, Hide: 52.63%, Run: NaN%, Eat: NaN%, Nothing: 72.73% ]
+Epoch 62 => Guess Accuracy: 42.00%
+Percentage correct[ Talk: 0.00%, Hide: 22.73%, Run: NaN%, Eat: NaN%, Nothing: 94.87% ]
+Epoch 63 => Guess Accuracy: 38.00%
+Percentage correct[ Talk: 0.00%, Hide: 20.00%, Run: NaN%, Eat: NaN%, Nothing: 71.43% ]
+Epoch 64 => Guess Accuracy: 52.00%
+Percentage correct[ Talk: 0.00%, Hide: 66.67%, Run: NaN%, Eat: NaN%, Nothing: 91.67% ]
+Epoch 65 => Guess Accuracy: 31.00%
+Percentage correct[ Talk: 0.00%, Hide: NaN%, Run: NaN%, Eat: NaN%, Nothing: 81.58% ]
+Epoch 66 => Guess Accuracy: 53.00%
+Percentage correct[ Talk: 12.50%, Hide: 61.11%, Run: NaN%, Eat: NaN%, Nothing: 88.10% ]
+Epoch 67 => Guess Accuracy: 54.00%
+Percentage correct[ Talk: 20.51%, Hide: 44.44%, Run: NaN%, Eat: NaN%, Nothing: 88.37% ]
+Epoch 68 => Guess Accuracy: 51.00%
+Percentage correct[ Talk: 24.07%, Hide: NaN%, Run: NaN%, Eat: NaN%, Nothing: 82.61% ]
+Epoch 69 => Guess Accuracy: 58.00%
+Percentage correct[ Talk: NaN%, Hide: 41.27%, Run: NaN%, Eat: NaN%, Nothing: 86.49% ]
+Epoch 70 => Guess Accuracy: 37.00%
+Percentage correct[ Talk: 0.00%, Hide: NaN%, Run: NaN%, Eat: NaN%, Nothing: 82.22% ]
+Epoch 71 => Guess Accuracy: 47.00%
+Percentage correct[ Talk: 15.79%, Hide: 12.50%, Run: NaN%, Eat: NaN%, Nothing: 95.12% ]
+Epoch 72 => Guess Accuracy: 27.00%
+Percentage correct[ Talk: 0.00%, Hide: NaN%, Run: NaN%, Eat: NaN%, Nothing: 79.41% ]
+Epoch 73 => Guess Accuracy: 35.00%
+Percentage correct[ Talk: 0.00%, Hide: 9.52%, Run: NaN%, Eat: NaN%, Nothing: 84.62% ]
+Epoch 74 => Guess Accuracy: 62.00%
+Percentage correct[ Talk: 0.00%, Hide: 43.59%, Run: NaN%, Eat: NaN%, Nothing: 95.74% ]
+Epoch 75 => Guess Accuracy: 64.00%
+Percentage correct[ Talk: 16.67%, Hide: 33.33%, Run: NaN%, Eat: NaN%, Nothing: 100.00% ]
+Epoch 76 => Guess Accuracy: 39.00%
+Percentage correct[ Talk: 0.00%, Hide: NaN%, Run: NaN%, Eat: NaN%, Nothing: 84.78% ]
+Epoch 77 => Guess Accuracy: 44.00%
+Percentage correct[ Talk: 3.03%, Hide: 50.00%, Run: NaN%, Eat: NaN%, Nothing: 82.76% ]
+Epoch 78 => Guess Accuracy: 61.00%
+Percentage correct[ Talk: NaN%, Hide: 49.15%, Run: NaN%, Eat: NaN%, Nothing: 78.05% ]
+Epoch 79 => Guess Accuracy: 70.00%
+Percentage correct[ Talk: NaN%, Hide: 57.14%, Run: NaN%, Eat: NaN%, Nothing: 91.89% ]
+Epoch 80 => Guess Accuracy: 49.00%
+Percentage correct[ Talk: 0.00%, Hide: 72.73%, Run: NaN%, Eat: NaN%, Nothing: 84.62% ]
+Epoch 81 => Guess Accuracy: 41.00%
+Percentage correct[ Talk: 0.00%, Hide: NaN%, Run: NaN%, Eat: NaN%, Nothing: 93.18% ]
+Epoch 82 => Guess Accuracy: 48.00%
+Percentage correct[ Talk: 5.13%, Hide: 42.86%, Run: NaN%, Eat: NaN%, Nothing: 92.50% ]
+Epoch 83 => Guess Accuracy: 57.00%
+Percentage correct[ Talk: 9.09%, Hide: 43.59%, Run: NaN%, Eat: NaN%, Nothing: 97.44% ]
+Epoch 84 => Guess Accuracy: 64.00%
+Percentage correct[ Talk: 27.78%, Hide: 51.22%, Run: NaN%, Eat: NaN%, Nothing: 92.68% ]
+Epoch 85 => Guess Accuracy: 47.00%
+Percentage correct[ Talk: 3.92%, Hide: NaN%, Run: NaN%, Eat: NaN%, Nothing: 91.84% ]
+Epoch 86 => Guess Accuracy: 44.00%
+Percentage correct[ Talk: 10.53%, Hide: NaN%, Run: NaN%, Eat: NaN%, Nothing: 88.37% ]
+Epoch 87 => Guess Accuracy: 40.00%
+Percentage correct[ Talk: 0.00%, Hide: 38.10%, Run: NaN%, Eat: NaN%, Nothing: 84.21% ]
+Epoch 88 => Guess Accuracy: 80.00%
+Percentage correct[ Talk: NaN%, Hide: 65.52%, Run: NaN%, Eat: NaN%, Nothing: 100.00% ]
+Epoch 89 => Guess Accuracy: 56.00%
+Percentage correct[ Talk: 14.29%, Hide: 37.50%, Run: NaN%, Eat: NaN%, Nothing: 97.44% ]
+Epoch 90 => Guess Accuracy: 25.00%
+Percentage correct[ Talk: 0.00%, Hide: NaN%, Run: NaN%, Eat: NaN%, Nothing: 75.76% ]
+Epoch 91 => Guess Accuracy: 61.00%
+Percentage correct[ Talk: 18.75%, Hide: 43.59%, Run: NaN%, Eat: NaN%, Nothing: 91.11% ]
+Epoch 92 => Guess Accuracy: 40.00%
+Percentage correct[ Talk: 5.45%, Hide: NaN%, Run: NaN%, Eat: NaN%, Nothing: 82.22% ]
+Epoch 93 => Guess Accuracy: 34.00%
+Percentage correct[ Talk: 0.00%, Hide: 16.67%, Run: NaN%, Eat: NaN%, Nothing: 83.33% ]
+Epoch 94 => Guess Accuracy: 49.00%
+Percentage correct[ Talk: 12.50%, Hide: 0.00%, Run: NaN%, Eat: NaN%, Nothing: 86.27% ]
+Epoch 95 => Guess Accuracy: 65.00%
+Percentage correct[ Talk: NaN%, Hide: 49.28%, Run: NaN%, Eat: NaN%, Nothing: 100.00% ]
+Epoch 96 => Guess Accuracy: 57.00%
+Percentage correct[ Talk: NaN%, Hide: 46.48%, Run: NaN%, Eat: NaN%, Nothing: 82.76% ]
+Epoch 97 => Guess Accuracy: 48.00%
+Percentage correct[ Talk: 20.51%, Hide: 47.62%, Run: NaN%, Eat: NaN%, Nothing: 75.00% ]
+Epoch 98 => Guess Accuracy: 56.00%
+Percentage correct[ Talk: 0.00%, Hide: 55.00%, Run: NaN%, Eat: NaN%, Nothing: 91.89% ]
+Epoch 99 => Guess Accuracy: 38.00%
+Percentage correct[ Talk: 9.38%, Hide: NaN%, Run: NaN%, Eat: NaN%, Nothing: 88.89% ]
+Epoch 100 => Guess Accuracy: 51.00%
+Percentage correct[ Talk: 12.50%, Hide: 56.52%, Run: NaN%, Eat: NaN%, Nothing: 89.19% ]
+Epoch 101 => Guess Accuracy: 29.00%
+Percentage correct[ Talk: 4.62%, Hide: NaN%, Run: NaN%, Eat: NaN%, Nothing: 74.29% ]
+Epoch 102 => Guess Accuracy: 67.00%
+Percentage correct[ Talk: 25.00%, Hide: 60.53%, Run: NaN%, Eat: NaN%, Nothing: 82.00% ]
+Epoch 103 => Guess Accuracy: 45.00%
+Percentage correct[ Talk: 5.66%, Hide: NaN%, Run: NaN%, Eat: NaN%, Nothing: 89.36% ]
+Epoch 104 => Guess Accuracy: 51.00%
+Percentage correct[ Talk: 0.00%, Hide: 75.00%, Run: NaN%, Eat: NaN%, Nothing: 90.00% ]
+Epoch 105 => Guess Accuracy: 59.00%
+Percentage correct[ Talk: 6.25%, Hide: 39.47%, Run: NaN%, Eat: NaN%, Nothing: 93.48% ]
+Epoch 106 => Guess Accuracy: 61.00%
+Percentage correct[ Talk: 33.33%, Hide: 33.33%, Run: NaN%, Eat: NaN%, Nothing: 89.80% ]
+Epoch 107 => Guess Accuracy: 42.00%
+Percentage correct[ Talk: 0.00%, Hide: 0.00%, Run: NaN%, Eat: NaN%, Nothing: 87.50% ]
+Epoch 108 => Guess Accuracy: 44.00%
+Percentage correct[ Talk: 2.63%, Hide: 36.00%, Run: NaN%, Eat: NaN%, Nothing: 91.89% ]
+Epoch 109 => Guess Accuracy: 41.00%
+Percentage correct[ Talk: 12.90%, Hide: NaN%, Run: NaN%, Eat: NaN%, Nothing: 86.84% ]
+Epoch 110 => Guess Accuracy: 64.00%
+Percentage correct[ Talk: NaN%, Hide: 41.18%, Run: NaN%, Eat: NaN%, Nothing: 87.76% ]
+Epoch 111 => Guess Accuracy: 39.00%
+Percentage correct[ Talk: 3.45%, Hide: NaN%, Run: NaN%, Eat: NaN%, Nothing: 88.10% ]
+Epoch 112 => Guess Accuracy: 44.00%
+Percentage correct[ Talk: 15.00%, Hide: NaN%, Run: NaN%, Eat: NaN%, Nothing: 87.50% ]
+Epoch 113 => Guess Accuracy: 56.00%
+Percentage correct[ Talk: 0.00%, Hide: 47.37%, Run: NaN%, Eat: NaN%, Nothing: 95.00% ]
+Epoch 114 => Guess Accuracy: 46.00%
+Percentage correct[ Talk: 33.33%, Hide: 10.53%, Run: NaN%, Eat: NaN%, Nothing: 81.82% ]
+Epoch 115 => Guess Accuracy: 73.00%
+Percentage correct[ Talk: NaN%, Hide: 47.73%, Run: NaN%, Eat: NaN%, Nothing: 92.86% ]
+Epoch 116 => Guess Accuracy: 27.00%
+Percentage correct[ Talk: 0.00%, Hide: NaN%, Run: NaN%, Eat: NaN%, Nothing: 81.82% ]
+Epoch 117 => Guess Accuracy: 44.00%
+Percentage correct[ Talk: 10.71%, Hide: NaN%, Run: NaN%, Eat: NaN%, Nothing: 86.36% ]
+Epoch 118 => Guess Accuracy: 39.00%
+Percentage correct[ Talk: 2.50%, Hide: 31.03%, Run: NaN%, Eat: NaN%, Nothing: 93.55% ]
+Epoch 119 => Guess Accuracy: 61.00%
+Percentage correct[ Talk: 42.11%, Hide: 46.34%, Run: NaN%, Eat: NaN%, Nothing: 85.00% ]
+Epoch 120 => Guess Accuracy: 34.00%
+Percentage correct[ Talk: 7.69%, Hide: NaN%, Run: NaN%, Eat: NaN%, Nothing: 82.86% ]
+Epoch 121 => Guess Accuracy: 50.00%
+Percentage correct[ Talk: NaN%, Hide: 21.67%, Run: NaN%, Eat: NaN%, Nothing: 92.50% ]
+Epoch 122 => Guess Accuracy: 50.00%
+Percentage correct[ Talk: NaN%, Hide: 21.31%, Run: NaN%, Eat: NaN%, Nothing: 94.87% ]
+Epoch 123 => Guess Accuracy: 76.00%
+Percentage correct[ Talk: NaN%, Hide: 63.46%, Run: NaN%, Eat: NaN%, Nothing: 89.58% ]
+Epoch 124 => Guess Accuracy: 44.00%
+Percentage correct[ Talk: 0.00%, Hide: NaN%, Run: NaN%, Eat: NaN%, Nothing: 89.80% ]
+Epoch 125 => Guess Accuracy: 66.00%
+Percentage correct[ Talk: 20.00%, Hide: 62.50%, Run: NaN%, Eat: NaN%, Nothing: 92.50% ]
+Epoch 126 => Guess Accuracy: 53.00%
+Percentage correct[ Talk: 13.16%, Hide: 40.00%, Run: NaN%, Eat: NaN%, Nothing: 89.36% ]
+Epoch 127 => Guess Accuracy: 56.00%
+Percentage correct[ Talk: 22.50%, Hide: 50.00%, Run: NaN%, Eat: NaN%, Nothing: 92.50% ]
+Epoch 128 => Guess Accuracy: 57.00%
+Percentage correct[ Talk: 17.50%, Hide: 0.00%, Run: NaN%, Eat: NaN%, Nothing: 96.15% ]
+Epoch 129 => Guess Accuracy: 31.00%
+Percentage correct[ Talk: 11.67%, Hide: NaN%, Run: NaN%, Eat: NaN%, Nothing: 60.00% ]
+Epoch 130 => Guess Accuracy: 34.00%
+Percentage correct[ Talk: 3.51%, Hide: NaN%, Run: NaN%, Eat: NaN%, Nothing: 74.42% ]
+Epoch 131 => Guess Accuracy: 43.00%
+Percentage correct[ Talk: 13.11%, Hide: NaN%, Run: NaN%, Eat: NaN%, Nothing: 89.74% ]
+Epoch 132 => Guess Accuracy: 47.00%
+Percentage correct[ Talk: 0.00%, Hide: NaN%, Run: NaN%, Eat: NaN%, Nothing: 88.68% ]
+Epoch 133 => Guess Accuracy: 68.00%
+Percentage correct[ Talk: NaN%, Hide: 73.44%, Run: NaN%, Eat: NaN%, Nothing: 58.33% ]
+Epoch 134 => Guess Accuracy: 63.00%
+Percentage correct[ Talk: NaN%, Hide: 45.31%, Run: NaN%, Eat: NaN%, Nothing: 94.44% ]
+Epoch 135 => Guess Accuracy: 44.00%
+Percentage correct[ Talk: 0.00%, Hide: 41.18%, Run: NaN%, Eat: NaN%, Nothing: 86.05% ]
+Epoch 136 => Guess Accuracy: 40.00%
+Percentage correct[ Talk: 0.00%, Hide: 48.15%, Run: NaN%, Eat: NaN%, Nothing: 81.82% ]
+Epoch 137 => Guess Accuracy: 45.00%
+Percentage correct[ Talk: 0.00%, Hide: 73.68%, Run: NaN%, Eat: NaN%, Nothing: 75.61% ]
+Epoch 138 => Guess Accuracy: 48.00%
+Percentage correct[ Talk: 12.82%, Hide: 0.00%, Run: NaN%, Eat: NaN%, Nothing: 89.58% ]
+Epoch 139 => Guess Accuracy: 61.00%
+Percentage correct[ Talk: 33.33%, Hide: 35.90%, Run: NaN%, Eat: NaN%, Nothing: 91.30% ]
+Epoch 140 => Guess Accuracy: 55.00%
+Percentage correct[ Talk: 0.00%, Hide: 42.50%, Run: NaN%, Eat: NaN%, Nothing: 88.37% ]
+Epoch 141 => Guess Accuracy: 29.00%
+Percentage correct[ Talk: 2.99%, Hide: NaN%, Run: NaN%, Eat: NaN%, Nothing: 81.82% ]
+Epoch 142 => Guess Accuracy: 66.00%
+Percentage correct[ Talk: NaN%, Hide: 50.00%, Run: NaN%, Eat: NaN%, Nothing: 92.11% ]
+Epoch 143 => Guess Accuracy: 49.00%
+Percentage correct[ Talk: 11.32%, Hide: NaN%, Run: NaN%, Eat: NaN%, Nothing: 91.49% ]
+Epoch 144 => Guess Accuracy: 50.00%
+Percentage correct[ Talk: 0.00%, Hide: 28.21%, Run: NaN%, Eat: NaN%, Nothing: 90.70% ]
+Epoch 145 => Guess Accuracy: 32.00%
+Percentage correct[ Talk: 4.69%, Hide: NaN%, Run: NaN%, Eat: NaN%, Nothing: 80.56% ]
+Epoch 146 => Guess Accuracy: 63.00%
+Percentage correct[ Talk: NaN%, Hide: 52.94%, Run: NaN%, Eat: NaN%, Nothing: 84.38% ]
+Epoch 147 => Guess Accuracy: 39.00%
+Percentage correct[ Talk: 0.00%, Hide: 34.78%, Run: NaN%, Eat: NaN%, Nothing: 83.78% ]
+Epoch 148 => Guess Accuracy: 76.00%
+Percentage correct[ Talk: NaN%, Hide: 65.08%, Run: NaN%, Eat: NaN%, Nothing: 94.59% ]
+Epoch 149 => Guess Accuracy: 60.00%
+Percentage correct[ Talk: NaN%, Hide: 33.90%, Run: NaN%, Eat: NaN%, Nothing: 97.56% ]
+Epoch 150 => Guess Accuracy: 66.00%
+Percentage correct[ Talk: NaN%, Hide: 50.00%, Run: NaN%, Eat: NaN%, Nothing: 92.11% ]
+Epoch 151 => Guess Accuracy: 59.00%
+Percentage correct[ Talk: 0.00%, Hide: 60.53%, Run: NaN%, Eat: NaN%, Nothing: 81.82% ]
+Epoch 152 => Guess Accuracy: 71.00%
+Percentage correct[ Talk: NaN%, Hide: 60.66%, Run: NaN%, Eat: NaN%, Nothing: 87.18% ]
+Epoch 153 => Guess Accuracy: 44.00%
+Percentage correct[ Talk: 0.00%, Hide: NaN%, Run: NaN%, Eat: NaN%, Nothing: 91.67% ]
+Epoch 154 => Guess Accuracy: 56.00%
+Percentage correct[ Talk: 31.03%, Hide: NaN%, Run: NaN%, Eat: NaN%, Nothing: 90.48% ]
+Epoch 155 => Guess Accuracy: 53.00%
+Percentage correct[ Talk: NaN%, Hide: 33.87%, Run: NaN%, Eat: NaN%, Nothing: 84.21% ]
+Epoch 156 => Guess Accuracy: 40.00%
+Percentage correct[ Talk: 19.40%, Hide: NaN%, Run: NaN%, Eat: NaN%, Nothing: 81.82% ]
+Epoch 157 => Guess Accuracy: 58.00%
+Percentage correct[ Talk: NaN%, Hide: 25.93%, Run: NaN%, Eat: NaN%, Nothing: 95.65% ]
+Epoch 158 => Guess Accuracy: 49.00%
+Percentage correct[ Talk: 0.00%, Hide: 0.00%, Run: NaN%, Eat: NaN%, Nothing: 89.09% ]
+Epoch 159 => Guess Accuracy: 44.00%
+Percentage correct[ Talk: 0.00%, Hide: NaN%, Run: NaN%, Eat: NaN%, Nothing: 93.62% ]
+Epoch 160 => Guess Accuracy: 55.00%
+Percentage correct[ Talk: 12.82%, Hide: 76.47%, Run: NaN%, Eat: NaN%, Nothing: 84.09% ]
+Epoch 161 => Guess Accuracy: 29.00%
+Percentage correct[ Talk: 0.00%, Hide: NaN%, Run: NaN%, Eat: NaN%, Nothing: 78.38% ]
+Epoch 162 => Guess Accuracy: 44.00%
+Percentage correct[ Talk: 7.55%, Hide: NaN%, Run: NaN%, Eat: NaN%, Nothing: 85.11% ]
+Epoch 163 => Guess Accuracy: 42.00%
+Percentage correct[ Talk: NaN%, Hide: 15.87%, Run: NaN%, Eat: NaN%, Nothing: 86.49% ]
+Epoch 164 => Guess Accuracy: 37.00%
+Percentage correct[ Talk: NaN%, Hide: 15.49%, Run: NaN%, Eat: NaN%, Nothing: 89.66% ]
+Epoch 165 => Guess Accuracy: 31.00%
+Percentage correct[ Talk: 1.52%, Hide: NaN%, Run: NaN%, Eat: NaN%, Nothing: 88.24% ]
+Epoch 166 => Guess Accuracy: 44.00%
+Percentage correct[ Talk: 0.00%, Hide: NaN%, Run: NaN%, Eat: NaN%, Nothing: 89.80% ]
+Epoch 167 => Guess Accuracy: 38.00%
+Percentage correct[ Talk: 6.45%, Hide: NaN%, Run: NaN%, Eat: NaN%, Nothing: 89.47% ]
+Epoch 168 => Guess Accuracy: 54.00%
+Percentage correct[ Talk: NaN%, Hide: 29.09%, Run: NaN%, Eat: NaN%, Nothing: 84.44% ]
+Epoch 169 => Guess Accuracy: 69.00%
+Percentage correct[ Talk: 31.25%, Hide: 51.28%, Run: NaN%, Eat: NaN%, Nothing: 97.78% ]
+Epoch 170 => Guess Accuracy: 74.00%
+Percentage correct[ Talk: NaN%, Hide: 56.36%, Run: NaN%, Eat: NaN%, Nothing: 95.56% ]
+Epoch 171 => Guess Accuracy: 57.00%
+Percentage correct[ Talk: 39.13%, Hide: 30.00%, Run: NaN%, Eat: NaN%, Nothing: 97.30% ]
+Epoch 172 => Guess Accuracy: 72.00%
+Percentage correct[ Talk: 0.00%, Hide: 38.46%, Run: NaN%, Eat: NaN%, Nothing: 95.00% ]
+Epoch 173 => Guess Accuracy: 37.00%
+Percentage correct[ Talk: 0.00%, Hide: NaN%, Run: NaN%, Eat: NaN%, Nothing: 86.05% ]
+Epoch 174 => Guess Accuracy: 49.00%
+Percentage correct[ Talk: 0.00%, Hide: 71.43%, Run: NaN%, Eat: NaN%, Nothing: 87.18% ]
+Epoch 175 => Guess Accuracy: 57.00%
+Percentage correct[ Talk: NaN%, Hide: 41.54%, Run: NaN%, Eat: NaN%, Nothing: 85.71% ]
+Epoch 176 => Guess Accuracy: 53.00%
+Percentage correct[ Talk: 9.09%, Hide: 42.50%, Run: NaN%, Eat: NaN%, Nothing: 89.47% ]
+Epoch 177 => Guess Accuracy: 53.00%
+Percentage correct[ Talk: 0.00%, Hide: 68.42%, Run: NaN%, Eat: NaN%, Nothing: 95.24% ]
+Epoch 178 => Guess Accuracy: 71.00%
+Percentage correct[ Talk: 0.00%, Hide: 56.41%, Run: NaN%, Eat: NaN%, Nothing: 98.00% ]
+Epoch 179 => Guess Accuracy: 55.00%
+Percentage correct[ Talk: 27.78%, Hide: 30.77%, Run: NaN%, Eat: NaN%, Nothing: 88.37% ]
+Epoch 180 => Guess Accuracy: 53.00%
+Percentage correct[ Talk: 19.05%, Hide: 28.21%, Run: NaN%, Eat: NaN%, Nothing: 95.00% ]
+Epoch 181 => Guess Accuracy: 45.00%
+Percentage correct[ Talk: 14.04%, Hide: NaN%, Run: NaN%, Eat: NaN%, Nothing: 86.05% ]
+Epoch 182 => Guess Accuracy: 59.00%
+Percentage correct[ Talk: 31.58%, Hide: 43.90%, Run: NaN%, Eat: NaN%, Nothing: 87.50% ]
+Epoch 183 => Guess Accuracy: 42.00%
+Percentage correct[ Talk: 0.00%, Hide: 0.00%, Run: NaN%, Eat: NaN%, Nothing: 87.50% ]
+Epoch 184 => Guess Accuracy: 36.00%
+Percentage correct[ Talk: 5.17%, Hide: NaN%, Run: NaN%, Eat: NaN%, Nothing: 78.57% ]
+Epoch 185 => Guess Accuracy: 51.00%
+Percentage correct[ Talk: 0.00%, Hide: 60.98%, Run: NaN%, Eat: NaN%, Nothing: 89.66% ]
+Epoch 186 => Guess Accuracy: 42.00%
+Percentage correct[ Talk: 0.00%, Hide: 0.00%, Run: NaN%, Eat: NaN%, Nothing: 95.45% ]
+Epoch 187 => Guess Accuracy: 42.00%
+Percentage correct[ Talk: 0.00%, Hide: 0.00%, Run: NaN%, Eat: NaN%, Nothing: 84.00% ]
+Epoch 188 => Guess Accuracy: 65.00%
+Percentage correct[ Talk: 33.33%, Hide: 34.21%, Run: NaN%, Eat: NaN%, Nothing: 100.00% ]
+Epoch 189 => Guess Accuracy: 67.00%
+Percentage correct[ Talk: NaN%, Hide: 43.64%, Run: NaN%, Eat: NaN%, Nothing: 95.56% ]
+Epoch 190 => Guess Accuracy: 34.00%
+Percentage correct[ Talk: 10.81%, Hide: 0.00%, Run: NaN%, Eat: NaN%, Nothing: 81.08% ]
+Epoch 191 => Guess Accuracy: 52.00%
+Percentage correct[ Talk: 47.62%, Hide: 24.39%, Run: NaN%, Eat: NaN%, Nothing: 84.21% ]
+Epoch 192 => Guess Accuracy: 36.00%
+Percentage correct[ Talk: 6.45%, Hide: NaN%, Run: NaN%, Eat: NaN%, Nothing: 84.21% ]
+Epoch 193 => Guess Accuracy: 58.00%
+Percentage correct[ Talk: 10.53%, Hide: 35.90%, Run: NaN%, Eat: NaN%, Nothing: 100.00% ]
+Epoch 194 => Guess Accuracy: 59.00%
+Percentage correct[ Talk: NaN%, Hide: 40.62%, Run: NaN%, Eat: NaN%, Nothing: 91.67% ]
+Epoch 195 => Guess Accuracy: 63.00%
+Percentage correct[ Talk: NaN%, Hide: 35.71%, Run: NaN%, Eat: NaN%, Nothing: 97.73% ]
+Epoch 196 => Guess Accuracy: 20.00%
+Percentage correct[ Talk: 0.00%, Hide: NaN%, Run: NaN%, Eat: NaN%, Nothing: 74.07% ]
+Epoch 197 => Guess Accuracy: 48.00%
+Percentage correct[ Talk: 17.24%, Hide: NaN%, Run: NaN%, Eat: NaN%, Nothing: 90.48% ]
+Epoch 198 => Guess Accuracy: 28.00%
+Percentage correct[ Talk: 5.80%, Hide: NaN%, Run: NaN%, Eat: NaN%, Nothing: 77.42% ]
+Epoch 199 => Guess Accuracy: 49.00%
+Percentage correct[ Talk: 5.00%, Hide: 0.00%, Run: NaN%, Eat: NaN%, Nothing: 90.38% ]
+Epoch 200 => Guess Accuracy: 40.00%
+Percentage correct[ Talk: 0.00%, Hide: 12.50%, Run: NaN%, Eat: NaN%, Nothing: 86.36% ]
+Epoch 201 => Guess Accuracy: 38.00%
+Percentage correct[ Talk: 6.67%, Hide: NaN%, Run: NaN%, Eat: NaN%, Nothing: 85.00% ]
+Epoch 202 => Guess Accuracy: 52.00%
+Percentage correct[ Talk: 7.69%, Hide: 46.15%, Run: NaN%, Eat: NaN%, Nothing: 91.43% ]
+Epoch 203 => Guess Accuracy: 77.00%
+Percentage correct[ Talk: NaN%, Hide: 60.38%, Run: NaN%, Eat: NaN%, Nothing: 95.74% ]
+Epoch 204 => Guess Accuracy: 46.00%
+Percentage correct[ Talk: 0.00%, Hide: 5.13%, Run: NaN%, Eat: NaN%, Nothing: 93.62% ]
+Epoch 205 => Guess Accuracy: 62.00%
+Percentage correct[ Talk: NaN%, Hide: 40.00%, Run: NaN%, Eat: NaN%, Nothing: 88.89% ]
+Epoch 206 => Guess Accuracy: 55.00%
+Percentage correct[ Talk: 0.00%, Hide: 26.32%, Run: NaN%, Eat: NaN%, Nothing: 90.00% ]
+Epoch 207 => Guess Accuracy: 71.00%
+Percentage correct[ Talk: 23.08%, Hide: 69.23%, Run: NaN%, Eat: NaN%, Nothing: 85.42% ]
+Epoch 208 => Guess Accuracy: 44.00%
+Percentage correct[ Talk: 0.00%, Hide: 58.54%, Run: NaN%, Eat: NaN%, Nothing: 64.52% ]
+Epoch 209 => Guess Accuracy: 54.00%
+Percentage correct[ Talk: 0.00%, Hide: NaN%, Run: NaN%, Eat: NaN%, Nothing: 90.00% ]
+Epoch 210 => Guess Accuracy: 32.00%
+Percentage correct[ Talk: 1.61%, Hide: NaN%, Run: NaN%, Eat: NaN%, Nothing: 81.58% ]
+Epoch 211 => Guess Accuracy: 46.00%
+Percentage correct[ Talk: 10.00%, Hide: 23.81%, Run: NaN%, Eat: NaN%, Nothing: 94.87% ]
+Epoch 212 => Guess Accuracy: 49.00%
+Percentage correct[ Talk: 2.56%, Hide: 50.00%, Run: NaN%, Eat: NaN%, Nothing: 87.23% ]
+Epoch 213 => Guess Accuracy: 56.00%
+Percentage correct[ Talk: NaN%, Hide: 27.78%, Run: NaN%, Eat: NaN%, Nothing: 89.13% ]
+Epoch 214 => Guess Accuracy: 39.00%
+Percentage correct[ Talk: 0.00%, Hide: 27.78%, Run: NaN%, Eat: NaN%, Nothing: 82.93% ]
+Epoch 215 => Guess Accuracy: 47.00%
+Percentage correct[ Talk: 0.00%, Hide: 56.25%, Run: NaN%, Eat: NaN%, Nothing: 88.37% ]
+Epoch 216 => Guess Accuracy: 59.00%
+Percentage correct[ Talk: 28.57%, Hide: 23.08%, Run: NaN%, Eat: NaN%, Nothing: 97.87% ]
+Epoch 217 => Guess Accuracy: 46.00%
+Percentage correct[ Talk: 21.74%, Hide: 22.50%, Run: NaN%, Eat: NaN%, Nothing: 86.49% ]
+Epoch 218 => Guess Accuracy: 54.00%
+Percentage correct[ Talk: NaN%, Hide: 21.15%, Run: NaN%, Eat: NaN%, Nothing: 89.58% ]
+Epoch 219 => Guess Accuracy: 54.00%
+Percentage correct[ Talk: 0.00%, Hide: 37.50%, Run: NaN%, Eat: NaN%, Nothing: 84.78% ]
+Epoch 220 => Guess Accuracy: 39.00%
+Percentage correct[ Talk: 0.00%, Hide: 42.31%, Run: NaN%, Eat: NaN%, Nothing: 80.00% ]
+Epoch 221 => Guess Accuracy: 69.00%
+Percentage correct[ Talk: NaN%, Hide: 40.38%, Run: NaN%, Eat: NaN%, Nothing: 100.00% ]
+Epoch 222 => Guess Accuracy: 68.00%
+Percentage correct[ Talk: NaN%, Hide: 50.00%, Run: NaN%, Eat: NaN%, Nothing: 92.86% ]
+Epoch 223 => Guess Accuracy: 60.00%
+Percentage correct[ Talk: NaN%, Hide: 24.49%, Run: NaN%, Eat: NaN%, Nothing: 94.12% ]
+Epoch 224 => Guess Accuracy: 43.00%
+Percentage correct[ Talk: 9.76%, Hide: 0.00%, Run: NaN%, Eat: NaN%, Nothing: 86.67% ]
+Epoch 225 => Guess Accuracy: 30.00%
+Percentage correct[ Talk: 0.00%, Hide: NaN%, Run: NaN%, Eat: NaN%, Nothing: 73.17% ]
+Epoch 226 => Guess Accuracy: 53.00%
+Percentage correct[ Talk: 0.00%, Hide: 60.00%, Run: NaN%, Eat: NaN%, Nothing: 85.29% ]
+Epoch 227 => Guess Accuracy: 50.00%
+Percentage correct[ Talk: NaN%, Hide: 19.35%, Run: NaN%, Eat: NaN%, Nothing: 100.00% ]
+Epoch 228 => Guess Accuracy: 49.00%
+Percentage correct[ Talk: 6.25%, Hide: NaN%, Run: NaN%, Eat: NaN%, Nothing: 88.46% ]
+Epoch 229 => Guess Accuracy: 51.00%
+Percentage correct[ Talk: 10.26%, Hide: 47.83%, Run: NaN%, Eat: NaN%, Nothing: 94.74% ]
+Epoch 230 => Guess Accuracy: 38.00%
+Percentage correct[ Talk: 7.14%, Hide: NaN%, Run: NaN%, Eat: NaN%, Nothing: 77.27% ]
+Epoch 231 => Guess Accuracy: 46.00%
+Percentage correct[ Talk: 0.00%, Hide: 41.03%, Run: NaN%, Eat: NaN%, Nothing: 88.24% ]
+Epoch 232 => Guess Accuracy: 52.00%
+Percentage correct[ Talk: 2.50%, Hide: 60.00%, Run: NaN%, Eat: NaN%, Nothing: 90.00% ]
+Epoch 233 => Guess Accuracy: 68.00%
+Percentage correct[ Talk: 5.88%, Hide: 60.98%, Run: NaN%, Eat: NaN%, Nothing: 100.00% ]
+Epoch 234 => Guess Accuracy: 35.00%
+Percentage correct[ Talk: 5.00%, Hide: 4.17%, Run: NaN%, Eat: NaN%, Nothing: 88.89% ]
+Epoch 235 => Guess Accuracy: 39.00%
+Percentage correct[ Talk: 0.00%, Hide: 23.53%, Run: NaN%, Eat: NaN%, Nothing: 83.33% ]
+Epoch 236 => Guess Accuracy: 60.00%
+Percentage correct[ Talk: 0.00%, Hide: 56.76%, Run: NaN%, Eat: NaN%, Nothing: 95.12% ]
+Epoch 237 => Guess Accuracy: 53.00%
+Percentage correct[ Talk: 8.89%, Hide: NaN%, Run: NaN%, Eat: NaN%, Nothing: 89.09% ]
+Epoch 238 => Guess Accuracy: 73.00%
+Percentage correct[ Talk: NaN%, Hide: 58.62%, Run: NaN%, Eat: NaN%, Nothing: 92.86% ]
+Epoch 239 => Guess Accuracy: 53.00%
+Percentage correct[ Talk: 31.58%, Hide: 34.15%, Run: NaN%, Eat: NaN%, Nothing: 82.50% ]
+Epoch 240 => Guess Accuracy: 57.00%
+Percentage correct[ Talk: NaN%, Hide: 39.34%, Run: NaN%, Eat: NaN%, Nothing: 84.62% ]
+Epoch 241 => Guess Accuracy: 39.00%
+Percentage correct[ Talk: 9.52%, Hide: NaN%, Run: NaN%, Eat: NaN%, Nothing: 89.19% ]
+Epoch 242 => Guess Accuracy: 44.00%
+Percentage correct[ Talk: 7.69%, Hide: NaN%, Run: NaN%, Eat: NaN%, Nothing: 83.33% ]
+Epoch 243 => Guess Accuracy: 45.00%
+Percentage correct[ Talk: 0.00%, Hide: 35.71%, Run: NaN%, Eat: NaN%, Nothing: 85.11% ]
+Epoch 244 => Guess Accuracy: 45.00%
+Percentage correct[ Talk: 0.00%, Hide: 47.62%, Run: NaN%, Eat: NaN%, Nothing: 87.50% ]
+Epoch 245 => Guess Accuracy: 72.00%
+Percentage correct[ Talk: NaN%, Hide: 52.94%, Run: NaN%, Eat: NaN%, Nothing: 91.84% ]
+Epoch 246 => Guess Accuracy: 60.00%
+Percentage correct[ Talk: NaN%, Hide: 26.92%, Run: NaN%, Eat: NaN%, Nothing: 95.83% ]
+Epoch 247 => Guess Accuracy: 60.00%
+Percentage correct[ Talk: NaN%, Hide: 40.00%, Run: NaN%, Eat: NaN%, Nothing: 90.00% ]
+Epoch 248 => Guess Accuracy: 41.00%
+Percentage correct[ Talk: 7.32%, Hide: 36.84%, Run: NaN%, Eat: NaN%, Nothing: 77.50% ]
+Epoch 249 => Guess Accuracy: 29.00%
+Percentage correct[ Talk: 1.61%, Hide: NaN%, Run: NaN%, Eat: NaN%, Nothing: 73.68% ]
+Epoch 250 => Guess Accuracy: 61.00%
+Percentage correct[ Talk: NaN%, Hide: 29.79%, Run: NaN%, Eat: NaN%, Nothing: 88.68% ]
+Epoch 251 => Guess Accuracy: 18.00%
+Percentage correct[ Talk: 0.00%, Hide: NaN%, Run: NaN%, Eat: NaN%, Nothing: 64.29% ]
+Epoch 252 => Guess Accuracy: 38.00%
+Percentage correct[ Talk: 0.00%, Hide: NaN%, Run: NaN%, Eat: NaN%, Nothing: 86.36% ]
+Epoch 253 => Guess Accuracy: 35.00%
+Percentage correct[ Talk: 0.00%, Hide: NaN%, Run: NaN%, Eat: NaN%, Nothing: 87.50% ]
+Epoch 254 => Guess Accuracy: 60.00%
+Percentage correct[ Talk: 29.17%, Hide: 56.10%, Run: NaN%, Eat: NaN%, Nothing: 85.71% ]
+Epoch 255 => Guess Accuracy: 37.00%
+Percentage correct[ Talk: 14.81%, Hide: 12.50%, Run: NaN%, Eat: NaN%, Nothing: 84.85% ]
+Epoch 256 => Guess Accuracy: 44.00%
+Percentage correct[ Talk: 10.00%, Hide: 22.22%, Run: NaN%, Eat: NaN%, Nothing: 85.71% ]
+Epoch 257 => Guess Accuracy: 69.00%
+Percentage correct[ Talk: 34.15%, Hide: 0.00%, Run: NaN%, Eat: NaN%, Nothing: 96.49% ]
+Epoch 258 => Guess Accuracy: 36.00%
+Percentage correct[ Talk: 0.00%, Hide: NaN%, Run: NaN%, Eat: NaN%, Nothing: 90.00% ]
+Epoch 259 => Guess Accuracy: 64.00%
+Percentage correct[ Talk: NaN%, Hide: 50.00%, Run: NaN%, Eat: NaN%, Nothing: 96.67% ]
+Epoch 260 => Guess Accuracy: 69.00%
+Percentage correct[ Talk: 20.83%, Hide: 75.00%, Run: NaN%, Eat: NaN%, Nothing: 94.44% ]
+Epoch 261 => Guess Accuracy: 52.00%
+Percentage correct[ Talk: 4.76%, Hide: 46.15%, Run: NaN%, Eat: NaN%, Nothing: 82.50% ]
+Epoch 262 => Guess Accuracy: 47.00%
+Percentage correct[ Talk: 9.76%, Hide: 0.00%, Run: NaN%, Eat: NaN%, Nothing: 93.48% ]
+Epoch 263 => Guess Accuracy: 53.00%
+Percentage correct[ Talk: 0.00%, Hide: 22.50%, Run: NaN%, Eat: NaN%, Nothing: 100.00% ]
+Epoch 264 => Guess Accuracy: 55.00%
+Percentage correct[ Talk: 25.00%, Hide: 20.00%, Run: NaN%, Eat: NaN%, Nothing: 91.67% ]
+Epoch 265 => Guess Accuracy: 62.00%
+Percentage correct[ Talk: NaN%, Hide: 46.77%, Run: NaN%, Eat: NaN%, Nothing: 86.84% ]
+Epoch 266 => Guess Accuracy: 59.00%
+Percentage correct[ Talk: NaN%, Hide: 35.09%, Run: NaN%, Eat: NaN%, Nothing: 90.70% ]
+Epoch 267 => Guess Accuracy: 41.00%
+Percentage correct[ Talk: 7.32%, Hide: 30.43%, Run: NaN%, Eat: NaN%, Nothing: 86.11% ]
+Epoch 268 => Guess Accuracy: 67.00%
+Percentage correct[ Talk: NaN%, Hide: 46.43%, Run: NaN%, Eat: NaN%, Nothing: 93.18% ]
+Epoch 269 => Guess Accuracy: 56.00%
+Percentage correct[ Talk: 5.00%, Hide: NaN%, Run: NaN%, Eat: NaN%, Nothing: 90.00% ]
+Epoch 270 => Guess Accuracy: 69.00%
+Percentage correct[ Talk: NaN%, Hide: 49.09%, Run: NaN%, Eat: NaN%, Nothing: 93.33% ]
+Epoch 271 => Guess Accuracy: 57.00%
+Percentage correct[ Talk: 0.00%, Hide: 64.10%, Run: NaN%, Eat: NaN%, Nothing: 78.05% ]
+Epoch 272 => Guess Accuracy: 32.00%
+Percentage correct[ Talk: 3.28%, Hide: NaN%, Run: NaN%, Eat: NaN%, Nothing: 76.92% ]
+Epoch 273 => Guess Accuracy: 45.00%
+Percentage correct[ Talk: 2.50%, Hide: 45.45%, Run: NaN%, Eat: NaN%, Nothing: 89.47% ]
+Epoch 274 => Guess Accuracy: 56.00%
+Percentage correct[ Talk: NaN%, Hide: 36.67%, Run: NaN%, Eat: NaN%, Nothing: 85.00% ]
+Epoch 275 => Guess Accuracy: 38.00%
+Percentage correct[ Talk: 0.00%, Hide: NaN%, Run: NaN%, Eat: NaN%, Nothing: 86.36% ]
+Epoch 276 => Guess Accuracy: 69.00%
+Percentage correct[ Talk: NaN%, Hide: 39.58%, Run: NaN%, Eat: NaN%, Nothing: 96.15% ]
+Epoch 277 => Guess Accuracy: 47.00%
+Percentage correct[ Talk: 7.69%, Hide: 8.33%, Run: NaN%, Eat: NaN%, Nothing: 87.76% ]
+Epoch 278 => Guess Accuracy: 45.00%
+Percentage correct[ Talk: 7.32%, Hide: 21.43%, Run: NaN%, Eat: NaN%, Nothing: 86.67% ]
+Epoch 279 => Guess Accuracy: 34.00%
+Percentage correct[ Talk: 3.23%, Hide: NaN%, Run: NaN%, Eat: NaN%, Nothing: 84.21% ]
+Epoch 280 => Guess Accuracy: 66.00%
+Percentage correct[ Talk: NaN%, Hide: 50.77%, Run: NaN%, Eat: NaN%, Nothing: 94.29% ]
+Epoch 281 => Guess Accuracy: 52.00%
+Percentage correct[ Talk: 0.00%, Hide: 55.00%, Run: NaN%, Eat: NaN%, Nothing: 71.43% ]
+Epoch 282 => Guess Accuracy: 68.00%
+Percentage correct[ Talk: 40.00%, Hide: 41.03%, Run: NaN%, Eat: NaN%, Nothing: 100.00% ]
+Epoch 283 => Guess Accuracy: 52.00%
+Percentage correct[ Talk: 0.00%, Hide: 47.62%, Run: NaN%, Eat: NaN%, Nothing: 82.05% ]
+Epoch 284 => Guess Accuracy: 55.00%
+Percentage correct[ Talk: 17.95%, Hide: 40.00%, Run: NaN%, Eat: NaN%, Nothing: 97.56% ]
+Epoch 285 => Guess Accuracy: 47.00%
+Percentage correct[ Talk: 40.00%, Hide: 17.95%, Run: NaN%, Eat: NaN%, Nothing: 73.91% ]
+Epoch 286 => Guess Accuracy: 64.00%
+Percentage correct[ Talk: 55.56%, Hide: 35.90%, Run: NaN%, Eat: NaN%, Nothing: 93.02% ]
+Epoch 287 => Guess Accuracy: 63.00%
+Percentage correct[ Talk: 20.00%, Hide: 37.50%, Run: NaN%, Eat: NaN%, Nothing: 100.00% ]
+Epoch 288 => Guess Accuracy: 40.00%
+Percentage correct[ Talk: 0.00%, Hide: NaN%, Run: NaN%, Eat: NaN%, Nothing: 86.96% ]
+Epoch 289 => Guess Accuracy: 57.00%
+Percentage correct[ Talk: 0.00%, Hide: 41.03%, Run: NaN%, Eat: NaN%, Nothing: 93.18% ]
+Epoch 290 => Guess Accuracy: 53.00%
+Percentage correct[ Talk: 32.00%, Hide: 28.21%, Run: NaN%, Eat: NaN%, Nothing: 94.44% ]
+Epoch 291 => Guess Accuracy: 44.00%
+Percentage correct[ Talk: 12.73%, Hide: NaN%, Run: NaN%, Eat: NaN%, Nothing: 82.22% ]
+Epoch 292 => Guess Accuracy: 63.00%
+Percentage correct[ Talk: 8.70%, Hide: 68.42%, Run: NaN%, Eat: NaN%, Nothing: 89.74% ]
+Epoch 293 => Guess Accuracy: 65.00%
+Percentage correct[ Talk: 43.59%, Hide: 52.63%, Run: NaN%, Eat: NaN%, Nothing: 90.48% ]
+Epoch 294 => Guess Accuracy: 62.00%
+Percentage correct[ Talk: NaN%, Hide: 43.94%, Run: NaN%, Eat: NaN%, Nothing: 97.06% ]
+Epoch 295 => Guess Accuracy: 59.00%
+Percentage correct[ Talk: 0.00%, Hide: 51.22%, Run: NaN%, Eat: NaN%, Nothing: 92.68% ]
+Epoch 296 => Guess Accuracy: 61.00%
+Percentage correct[ Talk: NaN%, Hide: 52.05%, Run: NaN%, Eat: NaN%, Nothing: 85.19% ]
+Epoch 297 => Guess Accuracy: 60.00%
+Percentage correct[ Talk: NaN%, Hide: 24.49%, Run: NaN%, Eat: NaN%, Nothing: 94.12% ]
+Epoch 298 => Guess Accuracy: 35.00%
+Percentage correct[ Talk: 0.00%, Hide: NaN%, Run: NaN%, Eat: NaN%, Nothing: 85.37% ]
+Epoch 299 => Guess Accuracy: 46.00%
+Percentage correct[ Talk: 10.91%, Hide: NaN%, Run: NaN%, Eat: NaN%, Nothing: 88.89% ]
+Epoch 300 => Guess Accuracy: 53.00%
+Percentage correct[ Talk: NaN%, Hide: 9.62%, Run: NaN%, Eat: NaN%, Nothing: 100.00% ]
+Epoch 301 => Guess Accuracy: 42.00%
+Percentage correct[ Talk: 5.56%, Hide: NaN%, Run: NaN%, Eat: NaN%, Nothing: 84.78% ]
+Epoch 302 => Guess Accuracy: 64.00%
+Percentage correct[ Talk: NaN%, Hide: 43.10%, Run: NaN%, Eat: NaN%, Nothing: 92.86% ]
+Epoch 303 => Guess Accuracy: 70.00%
+Percentage correct[ Talk: NaN%, Hide: 49.02%, Run: NaN%, Eat: NaN%, Nothing: 91.84% ]
+Epoch 304 => Guess Accuracy: 50.00%
+Percentage correct[ Talk: 0.00%, Hide: 46.15%, Run: NaN%, Eat: NaN%, Nothing: 93.62% ]
+Epoch 305 => Guess Accuracy: 58.00%
+Percentage correct[ Talk: NaN%, Hide: 32.14%, Run: NaN%, Eat: NaN%, Nothing: 90.91% ]
+Epoch 306 => Guess Accuracy: 54.00%
+Percentage correct[ Talk: 5.26%, Hide: 36.84%, Run: NaN%, Eat: NaN%, Nothing: 90.70% ]

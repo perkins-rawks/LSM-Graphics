@@ -5,7 +5,9 @@ use std::fmt;
 
 static TYPES: [&str; 4] = ["in", "liq_in", "liq", "readout"]; // The three types of neurons in our LSM
 static NTS: [&str; 2] = ["exc", "inh"]; // types of neurotransmitters
-pub static CLUSTERS: [&str; 4] = ["talk", "hide", "run", "eat"];
+// pub static CLUSTERS: [&str; 4] = ["talk", "hide", "run", "eat"];
+pub static CLUSTERS: [&str; 2] = ["talk", "hide"];
+
 
 #[derive(Clone)]
 pub struct Neuron {

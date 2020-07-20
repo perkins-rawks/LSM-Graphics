@@ -431,7 +431,7 @@ fn main() {
     // Important Variables \\
     let mut window = Window::new("Liquid State Machine"); // For graphics display
     window.set_light(Light::StickToCamera); // Graphics settings
-    const N_CLUSTERS: usize = 4; // The number of clusters
+    const N_CLUSTERS: usize = 2; // The number of clusters
                                  // Input neurons, number of clusters, ratio of
                                  // excitatory to inhibitory
     let inputs_per_cluster = 48;
@@ -457,17 +457,17 @@ fn main() {
     let color4 = (235. / 255., 212. / 255., 148. / 255.);
 
     // Clusters \\
-    let n: usize = 600; // The total number of neurons in all clusters
+    let n: usize = 300; // The total number of neurons in all clusters
     let var: f32 = 1.15; //1.75 // The variance in std. dev.
     let r: f32 = 0.1; // The radius of a single sphere
 
     // IF UPDATED MUST UPDATE NEURON GLOBAL 'CLUSTERS'
-    let cluster_types: [&str; N_CLUSTERS] = ["talk", "hide", "run", "eat"];
+    let cluster_types: Vec<&str> = vec!["talk", "hide", "run", "eat"];
 
-    let cluster_locs: [Point3<f32>; N_CLUSTERS] = [c1, c2, c3, c4];
-    let cluster_colors: [(f32, f32, f32); N_CLUSTERS] = [color1, color2, color3, color4];
+    let cluster_locs: Vec<Point3<f32>> = vec![c1, c2, c3, c4];
+    let cluster_colors: Vec<(f32, f32, f32)> = vec![color1, color2, color3, color4];
     // Try to keep it odd
-    let n_readouts: [usize; N_CLUSTERS] = [5, 5, 5, 5]; // number of readout neurons per cluster
+    let n_readouts: Vec<usize> = vec![5, 5, 5, 5]; // number of readout neurons per cluster
 
     assert_eq!(0, n % N_CLUSTERS);
 
@@ -497,7 +497,7 @@ fn main() {
 
     let train = true;
     // let epochs = 250;
-    let epochs = 250;
+    let epochs = 500;
     // let input = read_input();
     // let labels = read_labels();
     let input = read_training_input();
@@ -514,7 +514,7 @@ fn main() {
 
     // println!("\nFIRST ONE AFTER RESET IS IMPLEMENTED\n");
     // println!("\nREADOUTS TAKE TIME OUTS AFTER SPIKE; DELTA CALCIUM IS 1 / 10\n");
-    println!("\nWINNER TAKE ALL\n");
+    println!("\nPROB: 0.9 (TAXI-CAB)\n");
     for epoch in 0..epochs {
         println!("Running epoch {} ...", epoch);
         l1.run(

@@ -1339,7 +1339,7 @@ impl LSM {
         //              c_th      c_d
         // For each readout neuron's calcium values, if it's within a range
         // of the threshold, we potentiate.
-        let prob: f32 = 0.5; // Probability of Potentiation or depression
+        let prob: f32 = 0.9; // Probability of Potentiation or depression
         for cluster_idx in 0..self.n_clusters {
             for r_idx in 0..self.readouts[cluster_idx].len() {
                 let c_r: f32 = self.readouts_c_r[curr_t][cluster_idx][r_idx];
