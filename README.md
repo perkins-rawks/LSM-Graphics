@@ -9,6 +9,8 @@ Graphical representation of a Liquid State Machine
 
 ## User Controls
 - A - Toggle 3D Axis
-- L - Toggle connections between the Neurons
+- L - Toggle connections between the neurons
 - Y - Toggle rotation
 - S - Toggle neurons' visibility
+- R - Toggle readout neurons
+- C - Toggle connections between the readout and reservoir neurons
