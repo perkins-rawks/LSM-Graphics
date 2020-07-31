@@ -1,0 +1,720 @@
+Label: hide -- Guess: nothing
+Epoch 0 finished
+
+Label: hide -- Guess: nothing
+Epoch 1 finished
+
+Label: hide -- Guess: nothing
+Epoch 2 finished
+
+Label: hide -- Guess: nothing
+Epoch 3 finished
+
+Label: hide -- Guess: nothing
+Epoch 4 finished
+
+Label: hide -- Guess: nothing
+Epoch 5 finished
+
+Label: hide -- Guess: nothing
+Epoch 6 finished
+
+Label: hide -- Guess: nothing
+Epoch 7 finished
+
+Label: hide -- Guess: nothing
+Epoch 8 finished
+
+Label: hide -- Guess: nothing
+Epoch 9 finished
+
+Label: hide -- Guess: nothing
+Epoch 10 finished
+
+Label: hide -- Guess: nothing
+Epoch 11 finished
+
+Label: hide -- Guess: nothing
+Epoch 12 finished
+
+Label: hide -- Guess: nothing
+Epoch 13 finished
+
+Label: hide -- Guess: nothing
+Epoch 14 finished
+
+Label: hide -- Guess: nothing
+Epoch 15 finished
+
+Label: hide -- Guess: nothing
+Epoch 16 finished
+
+Label: hide -- Guess: nothing
+Epoch 17 finished
+
+Label: hide -- Guess: nothing
+Epoch 18 finished
+
+Label: hide -- Guess: nothing
+Epoch 19 finished
+
+Label: hide -- Guess: nothing
+Epoch 20 finished
+
+Label: hide -- Guess: nothing
+Epoch 21 finished
+
+Label: hide -- Guess: nothing
+Epoch 22 finished
+
+Label: hide -- Guess: nothing
+Epoch 23 finished
+
+Label: hide -- Guess: nothing
+Epoch 24 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+Epoch 25 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+Epoch 26 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+Epoch 27 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+Epoch 28 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+Epoch 29 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+Epoch 30 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+Epoch 31 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+Epoch 32 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+Epoch 33 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+Epoch 34 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+Epoch 35 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+Epoch 36 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+Epoch 37 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+Epoch 38 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+Epoch 39 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 40 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 41 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 42 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 43 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 44 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 45 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 46 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 47 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 48 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 49 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 50 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 51 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 52 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 53 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 54 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 55 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 56 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 57 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 58 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 59 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 60 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 61 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 62 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 63 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 64 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 65 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 66 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 67 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 68 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 69 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 70 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 71 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 72 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 73 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 74 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 75 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 76 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 77 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 78 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 79 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 80 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 81 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 82 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 83 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 84 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 85 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 86 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 87 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 88 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 89 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 90 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 91 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 92 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 93 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 94 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 95 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 96 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 97 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 98 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 99 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 100 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 101 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 102 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 103 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 104 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 105 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 106 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 107 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 108 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 109 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 110 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 111 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 112 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 113 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 114 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 115 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 116 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 117 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 118 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 119 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 120 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 121 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 122 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 123 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 124 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 125 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 126 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 127 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 128 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 129 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 130 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 131 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 132 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 133 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 134 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 135 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 136 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 137 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 138 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 139 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 140 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 141 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 142 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 143 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 144 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 145 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 146 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 147 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 148 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 149 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 150 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 151 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 152 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 153 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 154 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 155 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 156 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 157 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 158 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 159 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 160 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 161 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 162 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 163 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 164 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 165 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 166 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 167 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 168 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 169 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 170 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 171 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 172 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 173 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 174 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 175 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 176 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 177 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 178 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 179 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 180 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 181 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 182 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 183 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 184 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 185 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 186 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 187 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 188 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 189 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 190 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 191 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 192 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 193 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 194 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 195 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 196 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 197 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 198 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 199 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 200 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 201 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 202 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 203 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 204 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 205 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 206 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 207 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 208 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 209 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 210 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 211 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 212 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 213 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 214 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 215 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 216 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 217 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 218 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 219 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 220 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 221 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 222 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 223 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 224 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 225 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 226 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 227 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 228 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 229 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 230 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 231 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 232 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 233 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 234 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 235 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 236 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 237 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 238 finished
+
+Label: hide -- Guess: hide ======> (CORRECT!)
+TEST 239 finished
+

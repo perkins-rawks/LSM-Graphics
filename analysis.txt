@@ -1,14 +1,14 @@
 Lambda: 2.00
 C     : [EE: 0.45, EI: 0.3, IE: 0.6, II: 0.15, Loop: 0.1]
 
-Number of Neurons: 600
-Number of connections: 9698
+Number of Neurons: 200
+Number of connections: 3656
 
-Average number of connections per neuron: 16.16
-Average distance between connection     : 1.83
+Average number of connections per neuron: 18.28
+Average distance between connection     : 1.70
 
-Farthest connection: 6.67
-Closest connection : 0.08
+Farthest connection: 4.74
+Closest connection : 0.13
 
 Number of disconnected Neurons: 0
-Number of remaining Neurons: 600
+Number of remaining Neurons: 200

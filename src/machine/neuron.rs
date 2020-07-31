@@ -6,7 +6,7 @@ use std::fmt;
 static TYPES: [&str; 4] = ["in", "liq_in", "liq", "readout"]; // The three types of neurons in our LSM
 static NTS: [&str; 2] = ["exc", "inh"]; // types of neurotransmitters
 // pub static CLUSTERS: [&str; 4] = ["talk", "hide", "run", "eat"];
-pub static CLUSTERS: [&str; 2] = ["talk", "hide"];
+pub static CLUSTERS: [&str; 3] = ["hide", "run", "eat"];
 
 
 #[derive(Clone)]
@@ -243,7 +243,7 @@ impl Neuron {
         self.second_tau = [tau_s1, tau_s2];
     }
 
-    pub fn is_active(&self) -> bool {
+    pub fn _is_active(&self) -> bool {
         self.c > self.c_th
     }
 }
