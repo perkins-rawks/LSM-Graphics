@@ -507,7 +507,7 @@ fn main() {
         n_readout_clusters,
         0.8,
     );
-    let mut l2 = LSM::new(inputs_per_cluster, n_input_copies, N_CLUSTERS, 1, 0.8);
+    // let mut l2 = LSM::new(inputs_per_cluster, n_input_copies, N_CLUSTERS, 1, 0.8);
     // PINK: Input: 27x4 = 108  => 27 for 3x3 pic. spiketrain
     // YELLOW: Output: 216/4 = 54/2 = 27 => 3x3 talk spike train
 
@@ -536,7 +536,7 @@ fn main() {
     // IF UPDATED MUST UPDATE NEURON GLOBAL 'CLUSTERS'
     // let cluster_types: Vec<&str> = vec!["talk", "hide", "run", "eat"];
     let cluster_types: Vec<&str> = vec!["hide", "run", "eat"];
-    let bildo = "hide";
+    // let bildo = "hide";
 
     let cluster_locs: Vec<Point3<f32>> = vec![c1, c2, c3, c4];
     let cluster_colors: Vec<(f32, f32, f32)> = vec![color1, color2, color3, color4];
@@ -557,6 +557,7 @@ fn main() {
             cluster_colors[idx],
             n_readouts[idx],
         );
+        /*
         l2.make_cluster(
             &mut window,
             n / N_CLUSTERS,
@@ -567,6 +568,7 @@ fn main() {
             cluster_colors[idx + 1],
             n_readouts[idx + 1],
         );
+        */
     }
 
     let n_len = l1.get_neurons().len();
@@ -575,11 +577,10 @@ fn main() {
     let lambda = 2.; //5.//10.
     let c: [f32; 5] = [0.45, 0.3, 0.6, 0.15, 0.1]; // [EE, EI, IE, II, Loop]
     let connects_data = l1.make_connects(&mut window, c, lambda);
-    let _connects_data2 = l2.make_connects(&mut window, c, lambda);
+    // let _connects_data2 = l2.make_connects(&mut window, c, lambda);
     let lines = connects_data.0;
     let dists = connects_data.1;
     let readout_lines = connects_data.2;
-    // let epochs = 250;
     let train = true;
     let epochs = 1600;
     let time_steps = 30;
@@ -590,21 +591,19 @@ fn main() {
                                            // assert_eq!(labels.len(), input[0].len());
     let models = ["static", "first order", "second order"];
     let delay = 1;
-    let first_tau = 8;
+    let first_tau = 4;
     let mut f1 = File::create("output.txt").expect("Unable to create a file");
     let mut f2 = File::create("readout.txt").expect("Unable to create a file");
     let mut f3 = File::create("guesses.txt").expect("Unable to create a file");
     let mut f4 = File::create("epochs.txt").expect("Unable to create a file");
     let mut f5 = File::create("weights.txt").expect("Unable to create a file");
-    let mut f3_2 = File::create("l2-guesses.txt").expect("Unable to create a file");
-    // println!("\nFIRST ONE AFTER RESET IS IMPLEMENTED\n");
-    // println!("\nREADOUTS TAKE TIME OUTS AFTER SPIKE; DELTA CALCIUM IS 1 / 10\n");
-    println!("\nVARIABLE D_W\n");
+    // let mut f3_2 = File::create("l2-guesses.txt").expect("Unable to create a file");
+    println!("\nVARIABLE TIME STEPS\n");
     // let mut run_accuracy: f32 = 0.0;
     let mut scores: Vec<String> = Vec::new(); // has either corrects or incorrects
     let mut prev_epoch_accuracy: f32;
     let last_n = 20;
-    for epoch in 0..epochs - 1600 {
+    for epoch in 0..epochs {
         println!("Running epoch {} ...", epoch);
         l1.reset();
         prev_epoch_accuracy = epoch_accuracy(scores.clone(), last_n);
@@ -618,7 +617,7 @@ fn main() {
             &mut f5,
             &input[epoch],
             &labels[epoch],
-            models[2],
+            models[1],
             delay,
             first_tau,
             prev_epoch_accuracy,
@@ -641,7 +640,7 @@ fn main() {
 
     prev_epoch_accuracy = 0.;
     let mut test_scores: Vec<String> = Vec::new();
-    for test in epochs..epochs + tests - 400 {
+    for test in epochs..epochs + tests {
         println!("Running test {} ...", test);
         l1.reset();
         test_scores.push(l1.run(
@@ -654,7 +653,7 @@ fn main() {
             &mut f5,
             &input[test],
             &labels[test],
-            models[2],
+            models[1],
             delay,
             first_tau,
             prev_epoch_accuracy,
@@ -690,6 +689,7 @@ fn main() {
     //     }
     //     println!();
     // }
+    /*
     let epochs2 = 40;
     let tests2 = 200;
     for epoch in 0..epochs2 {
@@ -765,6 +765,7 @@ fn main() {
             (correct as f32) / (tests2 as f32) * 100.
         );
     }
+    */
 
     // Rendering \\
     let axis_len = 5.0;
