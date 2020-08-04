@@ -14,6 +14,8 @@ mod neuron;
 use neuron::Neuron;
 use neuron::CLUSTERS;
 
+mod utils;
+
 use std::io::Write;
 use std::time::Instant;
 use std::{fs, fs::File};
