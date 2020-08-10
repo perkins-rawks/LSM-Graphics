@@ -1,18 +1,38 @@
-use kiss3d::scene::SceneNode;
-use kiss3d::window::Window;
+/*
+    The Liquid State Machine (LSM) struct contains functionality for the input layer, liquid reservoir, readout neurons, 
+    and training. Each neuron in the liquid is a Neuron object, and are connected to each other by probability depending
+    on proximity to other neurons. Input that is read from another file in the input.rs file in src folder is processed
+    here and effects the liquid.
+    
+    Once every epoch (controlled in main file), a guess for what signal is recevied is the LSM's response. 
 
-use nalgebra::base::DMatrix;
-use nalgebra::geometry::Translation3;
-use nalgebra::{Point3, Vector3};
+    This file also writes on and fills other files including: 
 
-use rand::prelude::*;
+    o Voltage of the liquid at any given time
+    o Voltage and calcium of the readout at any time
+    o Weights between liquid and readout
+    o Epoch results
+    o Epoch guesses
+*/
+
+// Imports
+
+// kiss3d is a package for graphics
+use kiss3d::scene::SceneNode; // For neuron spheres
+use kiss3d::window::Window; // A window to draw on
+
+use nalgebra::base::DMatrix; // Matrix of variable size
+use nalgebra::geometry::Translation3; // A tuple of size 3 for SceneNode centers
+use nalgebra::{Point3, Vector3}; // Tuples of size 3 for other random uses
+
+use rand::prelude::*; 
 use rand::seq::SliceRandom;
 use rand::{rngs::StdRng, SeedableRng};
 use rand_distr::{Distribution, Normal};
 
 mod neuron;
 use neuron::Neuron;
-use neuron::CLUSTERS;
+use neuron::CLUSTERS; // static variable containing readout function names
 
 mod utils;
 
@@ -21,31 +41,29 @@ use std::time::Instant;
 use std::{fs, fs::File};
 
 pub struct LSM {
-    // Big structure of clustered up neurons and connections
-    clusters: Vec<Vec<Neuron>>,         // A cluster is a set of neurons
-    neurons: Vec<Neuron>,               // List of all neurons // has ownership of neurons
-    connections: DMatrix<u32>,          // List of all connections (1 if connected, 0 if not)
     n_total: usize,                     // The number of total neurons
     n_inputs: usize,                    // The number of input neurons
     n_input_copies: usize,              // The number of copies of the input is sent into the LSM
     n_clusters: usize,                  // The number of cluster neurons
     n_readout_clusters: usize,          // The number of readout clusters in a single cluster
-    e_ratio: f32,                       // 0-1 the ratio of excitatory to inhibitory neurons
-    readouts: Vec<Vec<Neuron>>,         // List of all clusters of read out neurons
+    neurons: Vec<Neuron>,               // List of all neurons which has ownership of each element
+    clusters: Vec<Vec<Neuron>>,         // A cluster is a set of neurons
+    readouts: Vec<Vec<Neuron>>,         // List of all clusters of readout neurons
     readout_weights: Vec<DMatrix<f32>>, // List of all the plastic weights between readouts and reservoir
     input_layer: Vec<Neuron>,           // Set of neurons that read input outside the reservoir
-    tau_m: u32,                         // time constant for membrane potential (ms)
-    tau_c: u32,                         // Time constant for calcium decay
-    liq_weights: [i32; 4],              // Fixed synaptic weights in the reservoir
-    r_weight_max: f32,                  // The maximum weight between readout and reservoir
-    r_weight_min: f32,                  // The minimum weight between readout and reservoir
-    // delta_weight: f32,
+    connections: DMatrix<u32>, // List of all connections in liquid (1 if connected, 0 if not)
+    liq_weights: [i32; 4],     // Fixed synaptic weights in the liquid
     readouts_c_r: Vec<Vec<Vec<f32>>>, // Each readout neuron's calcium values from each cluster for each epoch
     readouts_c_d: Vec<Vec<Vec<f32>>>, // Each readout neuron's desired calcium values from each cluster for each epoch
-    outputs: Vec<String>,             // The output of the LSM at any epoch
-    c_th: f32,                        // Calcium threshold for a readout neuron
-    c_margin: f32,                    // Margin around the Calcium threshold
-    responsible_liq: Vec<Vec<f32>>, // The neurons indices that cause spikes for each readout in one time step
+    responsible_liq: Vec<Vec<f32>>, // The indices of neurons that caused spikes for each readout in one time step
+    outputs: Vec<String>,           // The output of the LSM at every epoch
+    e_ratio: f32,      // The ratio of excitatory to inhibitory neurons (between 0 and 1)
+    tau_m: u32,        // Time constant for voltage decay
+    tau_c: u32,        // Time constant for calcium decay
+    r_weight_max: f32, // The maximum weight between readout and liquid
+    r_weight_min: f32, // The minimum weight between readout and liquid
+    c_th: f32,         // Calcium threshold for a readout neuron
+    c_margin: f32,     // Margin around the calcium threshold
 }
 
 impl LSM {
@@ -54,33 +72,34 @@ impl LSM {
         n_input_copies: usize,
         n_clusters: usize,
         n_readout_clusters: usize,
+        liq_weights: [i32; 4],
         e_ratio: f32,
     ) -> LSM {
+        assert_eq!(true, e_ratio <= 1.);
         Self {
-            clusters: Vec::new(),
+            n_total: n_inputs,
+            n_inputs,
+            n_input_copies,
+            n_clusters,
+            n_readout_clusters,
             neurons: Vec::new(),
-            connections: DMatrix::<u32>::zeros(0, 0), // Starts empty because you can't fill until later
-            n_total: n_inputs,                        // at least n_inputs + n_outputs
-            n_inputs: n_inputs,
-            n_input_copies: n_input_copies,
-            n_clusters: n_clusters,
-            n_readout_clusters: n_readout_clusters,
-            e_ratio: e_ratio,
+            clusters: Vec::new(),
             readouts: Vec::new(),
             readout_weights: Vec::new(),
             input_layer: Vec::new(),
-            tau_m: 32,
-            tau_c: 64,
-            liq_weights: [3, 6, -2, -2], // [EE, EI, IE, II]
-            r_weight_max: 8.,            // from weight-max calc
-            r_weight_min: -8.,           // from weight_min calc
-            // delta_weight: 0.0002 * (2 as f32).powf(13. - 4.), // 0.05 0.008 // 0.0002 * 2 ^ (n_bits - 4) but scaled down
+            connections: DMatrix::<u32>::zeros(0, 0),
+            liq_weights, // [Exc to Exc, Exc to Inh, Inh to Exc, Inh to Inh]
             readouts_c_r: Vec::new(),
             readouts_c_d: Vec::new(),
+            responsible_liq: Vec::new(),
             outputs: Vec::new(),
+            e_ratio,
+            tau_m: 32,
+            tau_c: 64,
+            r_weight_max: 8.,
+            r_weight_min: -8.,
             c_th: 5.,
             c_margin: 3.,
-            responsible_liq: Vec::new(),
         }
     }
 
@@ -90,100 +109,97 @@ impl LSM {
         window: &mut Window,        // Our screen
         n: usize,                   // The number of neurons we want in a cluster
         radius: f32,                // Radius of each sphere neuron
-        var: f32, // The variance in the distribution (Higher number means bell curve is wider)
+        var: f32, // The variance in the distribution (Larger number means bell curve is wider)
         cluster: &str, // The task for which the cluster is created (talk, eat, etc.)
         loc: &Point3<f32>, // Center of the cluster
         (r, g, b): (f32, f32, f32), // Color of the cluster
-        n_readouts: usize,
+        n_readouts: usize, // The number of readouts per cluster
     ) {
-        if n == 0 {
-            println!("No neurons.");
-            return;
-        }
         // Creates a cluster of n (r,g,b)-colored, radius sized neurons around a
         // center at loc, distributed around the center with variance var.
         // Also creates the readout set associated with each cluster and assigns
         // the neurons in it to be input randomly. At the end, the cluster is
-        // stored in a cluster list, and its neurons are stored in an overall
-        // neurons list variable.
-        let mut neurons: Vec<Neuron> = Vec::new();
-        let seed = [1_u8; 32]; // our seed, the 1s can be changed later
-                               // let mut rng = thread_rng(); // something like that
-        let mut rng = StdRng::from_seed(seed); // a seeded (predictable) random number
-                                               // println!("n: {}", n);
+        // stored in a cluster list, and its neurons are stored in the
+        // neurons list instance variable.
+        assert_ne!(n, 0); // so that we don't create an empty cluster
+        let mut neurons: Vec<Neuron> = Vec::new(); // we will set this to be our self.neurons
+        let seed = [1_u8; 32];
+        let mut rng = StdRng::from_seed(seed);
+
         for sphere in 0..n {
             // Normal takes mean and then variance
             let normal_x = Normal::new(loc[0], var).unwrap();
             let normal_y = Normal::new(loc[1], var).unwrap();
             let normal_z = Normal::new(loc[2], var).unwrap();
 
-            // Generate a random point for a new neuron
+            // Generates a random point for a new neuron.
+            // sample takes a random number generator
             let t = Translation3::new(
                 normal_x.sample(&mut rng),
                 normal_y.sample(&mut rng),
                 normal_z.sample(&mut rng),
             );
 
-            // let temp_connect: Vec<u32> = Vec::new();
             let neuron: Neuron = Neuron::new(window.add_sphere(radius), "liq", cluster);
-            // Push the new sphere into the spheres list
             neurons.push(neuron);
-            // let mut curr_n: &Neuron = &neurons[sphere];
+            // get_obj returns a &SceneNode which is a sphere that we draw
             neurons[sphere].get_obj().set_color(r, g, b);
+            // append_translation moves its center to the point t
             neurons[sphere].get_obj().append_translation(&t);
+            // set_loc is a neuron method that updates its location
             neurons[sphere].set_loc(&t);
-            // get obj returns the sphere associated with a neuron
         }
 
-        self.assign_input(&mut neurons);
-        let readouts: Vec<Neuron> =
-            self.make_readouts(window, n_readouts, &loc, radius, cluster.clone());
-        self.add_readouts(readouts);
-        self.add_cluster(neurons);
-        self.unpack(); //flattens the cluster list
+        self.assign_input(&mut neurons); // randomly assigns self.n_inputs number of liquid inputs
+        let readouts: Vec<Neuron> = self.make_readouts(window, n_readouts, &loc, radius);
+        self.add_readouts(readouts); // list assignment for the readouts
+        self.add_cluster(neurons); // adds the set of neurons we initialized earlier, treats it as one cluster
+        self.unpack(); // Unpacks the cluster list into self.neurons list
     }
 
     fn unpack(&mut self) {
-        // Puts all the neurons in the cluster into a vector of neurons. \\
+        // Puts all the neurons in the cluster into self's vector of neurons.
         // Also updates node identifications to be their index in the neurons list.
-        // The last neuron list in clusters
+
+        // Liquid IDs
+
+        // For each neuron in the most recent neuron list added in self.clusters
         for (id, neuron) in self.clusters[self.clusters.len() - 1].iter().enumerate() {
             self.neurons.push(neuron.clone()); // .clone() to avoid moving problems
 
             // Setting ID based on previous ID
             if id == 0 && self.clusters.len() == 1 {
-                self.neurons[id].set_id(0); // base case
+                // The very first liquid neuron's id
+                self.neurons[id].set_id(0);
             } else {
                 let last_idx = self.neurons.len() - 1;
                 let prev_id: usize = self.neurons[last_idx - 1].get_id();
                 self.neurons[last_idx].set_id(prev_id + 1);
             }
         }
-        self.n_total = self.neurons.len(); // update total neuron count
+        self.n_total = self.neurons.len(); // updates total neuron count
 
-        // Readout IDS
-        // For each readout in the most recent readout set made, set an
-        // appropriate ID
+        // Readout IDs
 
-        // INDEX WISE
-        // assuming each cluster has the same # of neurons
+        // Assuming each cluster has the same # of neurons
         // We CANNOT use self.n_total because the LSM is not filled yet. This is
         // only called in the process of setting up the LSM.
-        let count: usize = self.clusters[0].len(); // number of neurons in a single cluster
-        let r_len: usize = self.readouts.len();
+        let count: usize = self.clusters[0].len(); // number of neurons in the first cluster
+        let r_len: usize = self.readouts.len(); // the number of readout neurons
+
         // For each readout in the most recent readout set made
         for r_idx in 0..self.readouts[r_len - 1].len() {
             if r_idx == 0 && r_len == 1 {
-                // The very first readout neuron being setup \\
+                // The very first readout neuron's id
                 self.readouts[r_len - 1][r_idx].set_id(count * self.n_clusters);
             } else if r_idx == 0 && r_len > 1 {
-                // If NOT the first readout cluster and the index is 0 \\
+                // If NOT the first readout cluster and the index is 0
                 let last_readout: &Neuron = &self.readouts[r_len - 2] // prev cluster
                     [self.readouts[r_len - 2].len() - 1]; // last item in that prev cluster
                 let prev_id: usize = last_readout.get_id();
                 self.readouts[r_len - 1][r_idx].set_id(prev_id + 1);
             } else {
-                // Generally \\
+                // Generally
                 let last_readout: &Neuron = &self.readouts[r_len - 1][r_idx - 1];
                 let prev_id: usize = last_readout.get_id();
                 self.readouts[r_len - 1][r_idx].set_id(prev_id + 1);
@@ -192,29 +208,29 @@ impl LSM {
     }
 
     fn assign_input(&mut self, neurons: &mut Vec<Neuron>) {
-        // Assign input neurons. All neurons are also output now. \\
-        // assert_eq!(true, self.n_total >= self.n_inputs);
+        // Assigns self.n_inputs random liquid neurons to take input. \\
         assert_eq!(true, self.n_inputs > 0);
-        // assert_eq!(true, self.n_input_copies * self.n_inputs <= self.n_total);
 
-        // We want to choose n_inputs neurons from all the neurons created to be
+        // We want to choose n_inputs neurons from all the liquid neurons created to be
         // inputs.
-        let seed = [2; 32];
+        let seed: [u8; 32] = [2; 32];
         let mut rng = StdRng::from_seed(seed);
 
         // This list has the indices of every unique choice for an input neuron
-        // in this struct 'neurons' list.
+        // in self.neurons.
         let mut liq_idx: Vec<usize> = (0..neurons.len()).collect();
 
+        // Input copies is functionality we have to send multiple copies of the input
+        // to each cluster. This only is set to function if there is more than 1 cluster.
         for _ in 0..self.n_input_copies {
             for _ in 0..self.n_inputs {
-                // choose chooses a random element of the list.
-                let in_idx: usize = *liq_idx.choose(&mut rng).unwrap();
-                // Set to input, change the color, and remove that index so that we
-                // get unique input neurons
+                // choose chooses a random element of a vector
+                let in_idx: usize = *liq_idx.choose(&mut rng).unwrap(); // * is to dereference
+                                                                        // Set to input, change the color, and remove that index so that we
+                                                                        // get unique input neurons
                 neurons[in_idx].set_spec("liq_in");
-                neurons[in_idx].get_obj().set_color(0.9453, 0.0938, 0.6641);
-                // the index of in_idx in liq_idx
+                neurons[in_idx].get_obj().set_color(0.9453, 0.0938, 0.6641); // every liquid input is this color
+                                                                             // the index of in_idx in liq_idx
                 let idx = liq_idx.iter().position(|&r| r == in_idx).unwrap();
                 liq_idx.remove(idx);
             }
@@ -222,9 +238,14 @@ impl LSM {
     }
 
     fn assign_nt(&mut self) {
-        assert_eq!(true, self.e_ratio <= 1.);
-        // For a small LSM (2 nodes), make them both excitatory
-        if self.n_total < 2 {
+        // Assign_nt (neuro transmitter) calculates the number of excitatory
+        // and inhibitory neurons in the liquid and chooses randomly from the
+        // liquid to assign those roles. This is also where the second order
+        // model's hyper parameters (tau_1, tau_2) for the liq_response
+        // function are set.
+
+        // For a small LSM, make it excitatory
+        if self.n_total == 1 {
             for n in self.neurons.iter_mut() {
                 n.set_nt("exc");
             }
@@ -238,17 +259,18 @@ impl LSM {
         let seed = [3; 32];
         let mut rng = StdRng::from_seed(seed);
 
-        // This list has the indices of every unique choice for an input neuron
-        // in this struct 'neurons' list.
+        // This list has the indices of every unique liquid neuron
+        // in self.neurons list.
         let mut liq_idx: Vec<usize> = (0..self.n_total).collect();
         // Setting the excitatory neurons
         for _ in 0..n_exc {
             // Choose picks a random element of liq_idx
-            let exc_idx: usize = *liq_idx.choose(&mut rng).unwrap();
-            // Since we picked out an index, we can use that value to set the type
+            let exc_idx: usize = *liq_idx.choose(&mut rng).unwrap(); // * dereferences
+                                                                     // Set the role, second order model's hyper parameters, and remove
+                                                                     // the index as a choice for liq_idx
             self.neurons[exc_idx].set_nt("exc");
             self.neurons[exc_idx].set_second_tau(4, 8);
-            // Find the idx at which it chose that index and remove it
+            // Finds the idx of exc_idx in liq_idx
             let idx = liq_idx.iter().position(|&r| r == exc_idx).unwrap();
             liq_idx.remove(idx);
         }
@@ -262,50 +284,56 @@ impl LSM {
         }
     }
 
-    fn add_cluster(&mut self, add_cluster: Vec<Neuron>) {
-        self.clusters.push(add_cluster);
+    fn add_cluster(&mut self, new_cluster: Vec<Neuron>) {
+        // Adds a set of neurons (a cluster) to the clusters list
+        self.clusters.push(new_cluster);
     }
 
     pub fn get_neurons(&mut self) -> &mut Vec<Neuron> {
+        // Accessor method for all neurons in the liquid.
         &mut self.neurons
     }
 
     fn add_readouts(&mut self, readouts: Vec<Neuron>) {
+        // Pushes a cluster's readout neurons in the readouts list
         self.readouts.push(readouts);
     }
 
     fn make_readouts(
         &mut self,
         window: &mut Window, // Window we will draw on
-        n_readouts: usize,   // Total number of readout neurons that we want
-        loc: &Point3<f32>,   // The center of the Cluster
-        radius: f32,         // The radius of each readout neuron
-        _cluster: &str,      // The cluster type
+        n_readouts: usize,   // Total number of readout neurons to make
+        loc: &Point3<f32>,   // The center of the cluster
+        radius: f32,         // The radius of each readout neuron's associated sphere
     ) -> Vec<Neuron> {
-        // Returns a set of neurons.
+        // Creates the readouts for all clusters, and returns that set of
+        // neurons.
+        // self.n_readout_clusters is the number of signals an LSM has
+        // There must be at least one readout neuron per readout_cluster.
+        // For example, if I want the LSM to recognize "hide" and "run,"
+        // I may say n_readouts is 2, so one readout is dedicated to each
+        // function.
         assert_eq!(n_readouts % self.n_readout_clusters, 0);
 
-        // Makes a \\
+        // One readout set to return
         let mut readouts: Vec<Neuron> = Vec::new();
         for idx in 0..n_readouts {
+            // The location of the readout set
+
+            // To put the readouts behind the cluster
             let x: f32 = loc.x * 2.5;
             let y: f32 = loc.y;
             let z: f32 = loc.z * 2.5;
-
             let t = Translation3::new(x, y + n_readouts as f32 / 2. - idx as f32, z);
 
-            // less generally
-            // let neuron: Neuron;
-            // if idx >= n_readouts / 2 {
-            //     neuron = Neuron::new(window.add_sphere(radius), "readout", "hide");
-            // } else {
-            //     neuron = Neuron::new(window.add_sphere(radius), "readout", "talk");
-            // }
-            // more generally
+            // CLUSTERS is a list of all readout functions there are.
+            // The idx is so that the indexes of this are
+            // 0..(self.n_readout_clusters - 1) repeating until n_readouts
+            // neurons are created
             let function: &str = CLUSTERS[idx % self.n_readout_clusters];
             let neuron: Neuron = Neuron::new(window.add_sphere(radius), "readout", function);
+            // Same as in make_cluster method above
             readouts.push(neuron);
-
             readouts[idx].get_obj().append_translation(&t);
             readouts[idx].set_loc(&t);
         }
@@ -314,39 +342,45 @@ impl LSM {
 
     pub fn make_connects(
         &mut self,
-        window: &mut Window,
-        c: [f32; 5], // This and lambda are hyper parameters for connect_chance function.
+        window: &mut Window, // The window we draw our graphics on
+        c: [f32; 5], // This and lambda are hyper parameters for connect_chance function in utils.rs.
         lambda: f32,
     ) -> (
         Vec<(Point3<f32>, Point3<f32>, Point3<f32>)>,
         Vec<f32>,
         Vec<(Point3<f32>, Point3<f32>, Point3<f32>)>,
     ) {
-        // Connection Methods \\
-        // Returns a tuple of two vectors.
-        // The first vector has two points that are the centers of two "connected"
-        // neurons, and one point containing the r, g, and b values for the color of the
-        // edge.
-        // The second vector is a list of how long the edges are.
-        //self.assign_input();
+        // Returns a list of connections between liquid neurons, the distances
+        // between those connections, and the connections between readout neurons.
+
+        // Sets the weights between the input layer and the liquid input neurons
         self.set_input_weights();
-        self.assign_nt();
-        let n_len = self.n_total;
+        self.assign_nt(); // Sets neurons to excitatory or inhibitory
+        let n_len = self.n_total; // Because of moving value problems, we can't use self too often
+
+        // This matrix represents connections between two liquid neurons.
+        // At connects[(0, 1)], it will display a 1 if neuron 0 in self.neurons
+        // is connected to neuron 1 in self.neurons.
         let mut connects = DMatrix::<u32>::zeros(n_len, n_len);
 
-        // This function makes the edges between neurons based on a probability \\
-        // function previously defined. We don't render the lines until later.  \\
+        // This function makes the connections between neurons based on a probability
+        // function previously defined. We don't render the lines graphically
+        // until later.
+        // The tuples in connect_lines represent
+        // (Neuron 1 Location, Neuron 2 Location, Color of their connection)
         let mut connect_lines: Vec<(Point3<f32>, Point3<f32>, Point3<f32>)> = Vec::new();
+        // Dist_list is a list of distances between each neuron to their
+        // connected neurons.
         let mut dist_list: Vec<f32> = Vec::new();
-        // let mut rng = rand::thread_rng(); // some random number between 0 and 1 for computing probability
+
         let seed = [12; 32];
         let mut rng = StdRng::from_seed(seed);
-        // rng.gen::<f32>() for generating a (fixed) random number
+
         for idx1 in 0..n_len {
             let coord1: &Vector3<f32> = self.neurons[idx1].get_loc();
             // x, y, and z are components of a Vector3
             let (x1, y1, z1) = (coord1.x, coord1.y, coord1.z);
-            let idx1_nt: String = self.neurons[idx1].get_nt().clone();
+            let idx1_nt: String = self.neurons[idx1].get_nt().clone(); // either "exc" or "inh"
 
             // We can represent connections in an n x n (column major) matrix where n is the
             // total size of the LSM. Suppose we have 4 neurons in the LSM, and
@@ -363,52 +397,55 @@ impl LSM {
                 }
 
                 let mut c_idx: usize = 0;
+                // C is a list that holds the c parameters to the connect_chance
+                // function in utils.rs.
+                // It is in the order: [E to E, E to I, I to E, I to I, Loop]
+                // where Loop means connected to itself (a very rare chance)
                 let idx2_nt: String = self.neurons[idx2].get_nt().clone();
-                // starts with E
+                // Connection starts with E
                 if idx1_nt == "exc".to_string() {
-                    // ends with I
+                    // EI
                     if idx2_nt == "inh".to_string() {
                         c_idx = 1;
                     }
-                // if it doesn't end with E, then it needs to be 0, but it
+                // if it ends with E, then the index needs to be 0, but it
                 // already is 0, so don't change it
-                // starts with I
+
+                // Otherwise, the connection starts with I
                 } else {
-                    // ends with E
+                    // IE
                     if idx2_nt == "exc".to_string() {
                         c_idx = 2;
-                    // ends with I
+                    // II
                     } else if idx2_nt == "inh".to_string() {
                         c_idx = 3;
                     }
                 }
 
-                // the connection going the other way is on
+                // If connects[(idx1, idx2)] == connects[(idx2, idx1)] == 1,
+                // then we call it a loop
                 if connects[(idx2, idx1)] == 1 {
                     c_idx = 4; // a loop
                 } else if self.neurons[idx2].get_spec() == &"liq_in".to_string()
                     && self.neurons[idx1].get_spec() != &"liq_in".to_string()
                 {
-                    // if input neuron
+                    // The probability of a non-liquid input connecting to a
+                    // liquid input is lower.
+                    // This prevents liquid input from spiking when it
+                    // shouldn't, which skews the input.
                     c_idx = 4;
                 }
 
                 let coord2: &Vector3<f32> = self.neurons[idx2].get_loc();
                 let (x2, y2, z2) = (coord2.x, coord2.y, coord2.z);
-                // either exc or inh
-
-                let d = self.dist(&(x1, y1, z1), &(x2, y2, z2)); // distance between the two points
+                let d = utils::dist(&(x1, y1, z1), &(x2, y2, z2)); // distance between the two points
 
                 // Choosing the correct weight based on the combination of
-                // pre-synaptic  to postsynaptic type (They can be either
-                // excitatory inhibitory)
-                // c = [EE, EI, IE, II]
+                // pre-synaptic to postsynaptic neuron's type
 
-                // make connections based on distance and some hyper parameters
-                let prob_connect = self.connect_chance(d, c[c_idx], lambda);
-                // if self.neurons[idx1] ==
+                // Makes connections based on distance and some hyper parameters
+                let prob_connect: f32 = utils::connect_chance(d, c[c_idx], lambda);
                 let rand_num: f32 = rng.gen::<f32>();
-
                 if rand_num <= prob_connect {
                     connects[(idx1, idx2)] = 1;
                     connect_lines.push((
@@ -420,29 +457,29 @@ impl LSM {
                 }
             }
         }
-        self.update_pre_syn_connects(&connects);
-        self.add_connections(connects);
-        let readout_lines = self.make_readout_connects();
-        self.make_input_layer(window);
-        self.make_input_connects();
-        // self.update_n_connects();
+        self.update_pre_syn_connects(&connects); // Updates newest connections
+        self.add_connections(connects); // Adds the current connections
+        let readout_lines = self.make_readout_connects(); // Edges between readout neurons
+        self.make_input_layer(); // Makes the input layer
+        self.make_input_connects(); // Connects the input layer to the liquid reservoir
         (connect_lines, dist_list, readout_lines)
     }
 
     fn update_pre_syn_connects(&mut self, connects: &DMatrix<u32>) {
-        // Updates each neuron's pre-synaptic connections
+        // Updates each liquid neuron's pre-synaptic connections
 
         // Basic algorithm:
         // Go through all the neurons, (column wise in the connects DMatrix)
-        // For each neuron connecting to it, add that number to a list (that is
-        // representing a neuron being connected to it)
+        // For each neuron connecting to it, add that index to a list.
+        // That index is the index of that neuron in the self.neurons list.
 
         // We know that connects is n_total x n_total
         for col in 0..self.n_total {
             let mut pre_connects_idx: Vec<usize> = Vec::new();
             for row in 0..self.n_total {
-                // This order of index-ing results in getting pre-synaptic connects
-                // This row connects to col (col is our current neuron)
+                // Reminder that D Matrices are column-major.
+                // This order of indexing results in getting pre-synaptic connects.
+                // This row connects to this col (self.neurons[col] is our current neuron)
                 if connects[(row, col)] == 1 {
                     pre_connects_idx.push(row);
                 }
@@ -452,32 +489,42 @@ impl LSM {
     }
 
     pub fn load_readout_weights(&mut self) {
-        // IN ORDER: "HIDE", "RUN", "EAT"
-        // WORKS ONLY FOR UNO CLUSTER
+        // If the LSM is not training at all, this method is called to load a file with
+        // good readout weights for the three main symbols we attached
+        // In order, we have: "hide", "run", "eat" weights set in this trained_weights.txt file.
+        // NOTE: THIS METHOD WORKS FOR ONLY ONE CLUSTER
         let count = self.n_total / self.n_clusters;
+        // The count of all readouts, if we only have one cluster
         let readout_len = self.readouts[0].len();
 
+        // Read a file and split it into a vector by line
+        // Each line is one function's readout weights.
         let contents =
             fs::read_to_string("trained_weights.txt").expect("Unable to read input file");
         let contents: Vec<&str> = contents.split("\n").collect();
-        let mut weights = DMatrix::<f32>::zeros(readout_len, count);
+        let mut weights = DMatrix::<f32>::zeros(readout_len, count); // we will fill this matrix
         for (r_idx, line) in contents.iter().enumerate() {
             let new_line: Vec<&str> = line.trim().split(", ").collect();
             for (n_idx, num) in new_line.iter().enumerate() {
-                // println!("{}", num);
                 weights[(r_idx, n_idx)] = num.parse::<f32>().unwrap();
             }
         }
+        // Each vector in self.readout_weights is one readout neuron's readout
+        // weights at a time.
         self.readout_weights = vec![weights];
     }
 
     fn make_readout_connects(&mut self) -> Vec<(Point3<f32>, Point3<f32>, Point3<f32>)> {
-        // connect_lines: <(point 1, point 2, color), ... >
+        // Returns a vector containing tuples of the form
+        // (Readout 1 location, Readout 2 location, Edge color)
+        // for each readout neuron.
+
+        // Making sure we only call this method once.
         assert_eq!(self.readout_weights.is_empty(), true);
+        // The vector we will return
         let mut connect_lines: Vec<(Point3<f32>, Point3<f32>, Point3<f32>)> = Vec::new();
         let seed = [99; 32];
         let mut rng1 = StdRng::from_seed(seed);
-        // let mut rng1 = rand::thread_rng();
 
         // Number of neurons in one cluster, assuming all clusters are equally sized
         let count = self.n_total / self.n_clusters;
@@ -491,8 +538,10 @@ impl LSM {
                 let r_loc = self.readouts[cluster_idx][readout_idx].get_loc();
                 let (x1, y1, z1) = (r_loc.x, r_loc.y, r_loc.z);
 
-                // Steps by the number of neurons in a cluster
-                // For each neuron, save its location
+                // If there is one cluster, neuron_idx is from 0 to count.
+                // At two clusters, neuron_idx is from count to 2*count.
+                // This index is possible only if each cluster has the same
+                // number of neurons.
                 for neuron_idx in count * cluster_idx..count * (cluster_idx + 1) {
                     let n_loc = self.neurons[neuron_idx].get_loc();
                     let (x2, y2, z2) = (n_loc.x, n_loc.y, n_loc.z);
@@ -502,8 +551,9 @@ impl LSM {
                         Point3::new(227. / 255., 120. / 255., 105. / 255.), // light pink
                     ));
 
-                    // 'The neuron_idx % count' is to sort by cluster
-                    // All readout weights are set to 1 at first
+                    // The 'neuron_idx % count' is to sort by cluster
+                    // All readout weights are set to a random float
+                    // between -1 and 1.
                     readout_weights[(readout_idx, neuron_idx % count)] =
                         (rng1.gen::<f32>() * 2.) - 1.;
                 }
@@ -514,23 +564,17 @@ impl LSM {
     }
 
     pub fn get_readouts(&mut self) -> &mut Vec<Vec<Neuron>> {
+        // Accessor method for the readouts of each function.
         &mut self.readouts
     }
 
     pub fn remove_disconnects(&mut self, window: &mut Window) {
-        // Removes neurons that are not connected to any other neurons \\
-        // You can collect and re-add these in
-        // for idx in 0..self.neurons.len() {
-        //     let sum_connects: u32 = self.neurons[idx].get_connects().iter().sum();
-        //     if sum_connects == 1 {
-        //         // self.neurons[idx].get_obj().set_visible(false);
-        //         window.remove_node(self.neurons[idx].get_obj());
-        //         rm_n.push(idx); // You can collect and re-add these in
-        //     }
-        // }
+        // Removes neurons that are not connected to any other neurons. \\
+        // The indices of neurons which have no connections
         let mut rm_n: Vec<usize> = Vec::new();
         for col in 0..self.n_total {
-            let mut connected: bool = false; // if current neuron has a connection, true
+            // If the current neuron has any connection, this is true
+            let mut connected: bool = false;
             for row in 0..self.n_total {
                 // We need to remove only if the neuron has no connections into
                 // or out from it.
@@ -540,53 +584,30 @@ impl LSM {
                 }
             }
             if !connected {
-                window.remove_node(self.neurons[col].get_obj());
+                window.remove_node(self.neurons[col].get_obj()); // Erases it from window
                 rm_n.push(col);
             }
         }
 
         for idx in 0..rm_n.len() {
+            // Removes the neuron from the neurons list.
+            // Note: remove is a function for vectors that takes an index
             self.neurons.remove(rm_n[idx] - idx);
         }
     }
 
-    fn connect_chance(
-        &self,
-        d_ab: f32,   // The distance between neurons a and b
-        c: f32,      // A hyper parameter. At very close distances, the probability output is c.
-        lambda: f32, // A hyper parameter. At larger values of lambda, the decay slows.
-    ) -> f32 {
-        // Computes the probability that two neurons are connected based on the     \\
-        // distance between neurons a and b, and two hyper parameters C and lambda. \\
-        // CITE: Maass 2002 paper pg. 18, connectivity of neurons.                  \\
-        let exponent: f32 = -1. * ((d_ab / lambda).powf(2.));
-        c * exponent.exp()
-    }
-
-    fn dist(
-        &self,
-        (x1, y1, z1): &(f32, f32, f32), // point 1
-        (x2, y2, z2): &(f32, f32, f32), // point 2
-    ) -> f32 {
-        // Finds the Euclidean Distance between 2 3D points \\
-        ((x2 - x1).powf(2.) + (y2 - y1).powf(2.) + (z2 - z1).powf(2.)).sqrt()
-    }
-
     fn add_connections(&mut self, connects: DMatrix<u32>) {
+        // Assignment for connections matrix. Just moves the variable.
         self.connections = connects;
     }
 
     pub fn get_connections(&mut self) -> &mut DMatrix<u32> {
+        // Accessor method for the connections matrix.
         &mut self.connections
     }
 
-    fn make_input_layer(&mut self, window: &mut Window) {
-        // Creates neurons that will feed into the reservoir's input
-        // How many? There will be n_inputs of them
-        // Where are they located? Somewhere away from clusters.
-        // What do they do? This function doesn't know.
-        let mut sp = window.add_sphere(0.1);
-        sp.set_visible(false);
+    fn make_input_layer(&mut self) {
+        // Creates n_input neurons that will feed into the reservoir's input
         let mut empty = SceneNode::new_empty();
         empty.set_visible(false);
         for _ in 0..self.n_inputs {
@@ -596,8 +617,7 @@ impl LSM {
     }
 
     fn set_input_weights(&mut self) {
-        // Sets the weight of input for one neuron to be either -8 or 8
-        // FROM Zhang et al 2015 pg 2645
+        // Sets the weight between input layer neurons and liquid inputs to be either -8 or 8
         let seed = [10; 32];
         let mut rng = StdRng::from_seed(seed);
         let percentage = self.e_ratio.clone();
@@ -605,8 +625,6 @@ impl LSM {
         let weights = [-8, 8];
         for neuron in self.get_neurons().iter_mut() {
             if neuron.get_spec() == &"liq_in".to_string() {
-                // neuron.set_input_weight(weights.choose(&mut
-                // rng).unwrap().clone());
                 if rng.gen::<f32>() < percentage {
                     neuron.set_input_weight(weights[1]);
                 } else {
@@ -617,18 +635,22 @@ impl LSM {
     }
 
     fn make_input_connects(&mut self) {
-        // Connects the outside input layer to an input neuron in each cluster
-        // in the reservoir
+        // Connects the outside input layer to each liquid input neuron in each cluster
 
         // Updates a neuron classified as "liq_in"'s input_connect attribute
-        // This represents the index of that neuron in LSM input_layer vector
+        // This represents the index of that neuron in self.input_layer vector
 
+        // The number of neurons in a cluster
         let count: usize = self.n_total / self.n_clusters;
         for cluster in 0..self.n_clusters {
             let mut input_idx: usize = 0;
+            // Same as for loop in make_readout_connects
+            // Only works if each cluster is the same length.
             for neuron_idx in count * cluster..count * (cluster + 1) {
-                // Connect an input layer neuron to one reservoir input in each cluster
+                // Connects an input layer neuron to one reservoir input in each cluster
                 if input_idx >= self.n_inputs {
+                    // This is for multi-cluster functionality, so that the
+                    // input is copied across multiple clusters
                     input_idx = 0;
                 }
                 if self.neurons[neuron_idx].get_spec() == &"liq_in".to_string() {
@@ -639,12 +661,20 @@ impl LSM {
         }
     }
 
-    fn set_spike_times(&mut self, input: &Vec<Vec<u32>>) {
+    fn set_spike_times(
+        &mut self,
+        input: &Vec<Vec<u32>>, // The input spike trains read from another file
+    ) {
+        // This sets the spike times array of the liquid input neurons by
+        // reading the activity in the input directly. Activity is defined by
+        // a 1 in a spike train.
+
+        // There should be as many liquid input neurons as there are spike
+        // trains.
         assert_eq!(self.n_inputs, input.len());
         // For each liq_in neuron's pre-synaptic connects, set the
         // spike_times array to be the index of 1's in the input vector
 
-        // We know input is as long as the n_inputs.
         // For all the inputs in the reservoir
         for input_idx in 0..self.n_inputs {
             // Go through input spike, if there is a 1, we put the index that we found
@@ -659,105 +689,32 @@ impl LSM {
         }
     }
 
-    fn delta(&self, n: i32) -> f32 {
-        // Kronecker / Dirac delta function
-        // A spike helper function
-        // It outputs 1 only at 0 (Dirac outputs infinity at 0)
-        if n == 0 {
-            return 1.;
-        }
-        0.
-    }
-
-    fn heaviside(&self, n: i32) -> f32 {
-        // Heaviside step function
-        // When n < 0, H(n) = 0
-        //      n > 0, H(n) = 1
-        //      n = 0, H is undefined, but we put 1
-        if n </*=*/ 0 {
-            return 0.;
-        }
-        1.
-    }
-
-    fn delta_calcium(&self, n: i32) -> f32 {
-        // Kronecker / Dirac delta function
-        // A spike helper function
-        // It outputs 1 only at 0 (Dirac outputs infinity at 0)
-        // let seed = [13; 32];
-        // let mut rng = StdRng::from_seed(seed);
-        if n == 0 {
-            return 1.;
-        }
-        0.
-    }
-
-    fn liq_response(
+    // This allows the talk method to not be called for one test or another.
+    #[allow(dead_code)]
+    pub fn talk(
         &self,
-        model: &str,
-        curr_t: i32,
-        t_spike: i32,
-        delay: i32,
-        first_tau: u32,
-        tau_s1: u32,
-        tau_s2: u32,
-    ) -> f32 {
-        if model == "static" {
-            return self.delta(curr_t - t_spike - delay);
-        } else if model == "first order" {
-            let exponent = ((curr_t - t_spike - delay) as f32 * -1.) / (first_tau as f32);
-            return (1. / first_tau as f32)
-                * f32::exp(exponent)
-                * self.heaviside(curr_t - t_spike - delay);
-        } else if model == "second order" {
-            // returns two different things
-            // one with exponent1 and the other with exponent2
-            let exponent1: f32 = ((curr_t - t_spike - delay) as f32 * -1.) / (tau_s1 as f32);
-            let exponent2: f32 = ((curr_t - t_spike - delay) as f32 * -1.) / (tau_s2 as f32);
-            let denominator: f32 = tau_s1 as f32 - tau_s2 as f32;
-            let h = self.heaviside(curr_t - t_spike - delay);
-            let part1 = f32::exp(exponent1);
-            let part2 = f32::exp(exponent2);
-            // In equation 21, if we factor out w, we can just
-            // subtract the two parts together instead of calculate
-            // two separately
-            return (part1 - part2) * h / denominator;
-        }
-        panic!("Model was chosen incorrectly");
-    }
+        word: &str, // The word that will be converted to a spike train
+        n_time_steps: u32,
+    ) -> Vec<Vec<u32>> // An output spike train that can be fed into another LSM
+    {
+        // Talk is a function from a string to a spike train. It takes a small
+        // string and generates a unique spike train that can be used as input
+        // for another LSM.
 
-    fn string_to_seed(&self, word: &str) -> [u8; 32] {
-        let words = word.as_bytes();
-        let words: Vec<String> = words.iter().map(|bit| bit.to_string()).collect();
-        let seed_str = words.concat();
-        let seed_chars: Vec<char> = seed_str.chars().collect();
-
-        assert_eq!(seed_str.len() < 65, true);
-        let mut seed = [0_u8; 32];
-        let mut mini_seed: String;
-        for char_idx in (0..seed_str.len() - 1).step_by(2) {
-            mini_seed = [
-                seed_chars[char_idx].to_string(),
-                seed_chars[char_idx + 1].to_string(),
-            ]
-            .concat();
-            seed[char_idx / 2] = mini_seed.parse().unwrap();
-        }
-        seed
-    }
-
-    pub fn talk(&self, word: &str, n_time_steps: u32) -> Vec<Vec<u32>> {
-        let seed = self.string_to_seed(word);
+        let seed = utils::string_to_seed(word);
         let mut rng = StdRng::from_seed(seed);
-        let prob_of_one = 0.667;
-        let prob_noise = 0.05;
+        let prob_of_one = 0.667; // The probability for each randomly generated number to be active
+        let prob_noise = 0.05; // The probability for random noise on the spike train
 
         let mut spike_trains: Vec<Vec<u32>> = Vec::new();
 
+        // Creates an n_inputs by n_time steps grid of spike trains.
+        // Each row is a spike train for another LSM.
         for _ in 0..self.n_inputs {
             let mut spike_train: Vec<u32> = Vec::new();
             if rng.gen::<f32>() < prob_of_one {
                 for _ in 0..n_time_steps {
+                    // Will most likely be a one, but sometimes a zero
                     if rng.gen::<f32>() < prob_noise {
                         spike_train.push(0);
                     } else {
@@ -766,6 +723,7 @@ impl LSM {
                 }
             } else {
                 for _ in 0..n_time_steps {
+                    // Will most likely be a zero, but sometimes a one
                     if rng.gen::<f32>() < prob_noise {
                         spike_train.push(1);
                     } else {
@@ -780,29 +738,23 @@ impl LSM {
 
     pub fn run(
         &mut self,
-        train: bool,
-        epoch: usize,
-        f1: &mut File,
-        f2: &mut File,
-        f3: &mut File,
-        f4: &mut File,
-        f5: &mut File,
-        input: &Vec<Vec<u32>>,
-        label: &String,
-        model: &str,
-        delay: i32,
-        first_tau: u32,
-        prev_epoch_accuracy: f32,
+        train: bool,              // Whether or not we are training
+        epoch: usize,             // The total number of training + testing epochs
+        f1: &mut File,            // The outputs of the liquid voltage per time step
+        f2: &mut File,            // The readouts per time step
+        f3: &mut File,            // The guesses per epoch
+        f4: &mut File,            // Epoch guesses (Correct or Incorrect)
+        f5: &mut File,            // The readout weights over time
+        input: &Vec<Vec<u32>>,    // The input spike trains
+        label: &String,           // Label of the signal per epoch. Each epoch has one signal.
+        model: &str,              // The model we want to use in voltage calculation.
+        delay: i32,               // The delay for how we calculate spike times
+        first_tau: u32,           // If this is first order model, this is its hyper parameter.
+        prev_epoch_accuracy: f32, // A running average of the past few epochs.
     ) -> String {
         // Updates voltage connections for all neurons in the LSM.
-        // Implementation of Equation 14, 19, 20, 21 in Zhang et al 2015
 
-        /*
-          3 Different kinds of running:
-            o Input layer to reservoir input neurons
-            o Any liquid to liquid
-            o Reservoir to readout neurons
-        */
+        // For special writing of the initial readout weights to file in the first epoch
         if epoch == 0 {
             for col in 0..self.n_readout_clusters {
                 f5.write_all(
@@ -818,31 +770,21 @@ impl LSM {
             }
         }
 
+        // For timing each epoch
         let now = Instant::now();
 
+        // Tracks the activity of the spike trains and puts that information into the input layer.
         self.set_spike_times(input);
-
         let input_time_steps: usize = input[0].len();
-
+        let additional_delay: i32 = 8; // A delay hyper parameter for how long it takes the LSM to guess accurately.
+        let n_time_steps = input_time_steps + (additional_delay as usize);
+        // Resets each time this function is called
         self.responsible_liq = vec![vec![0.; self.n_total]; self.readouts[0].len()];
 
-        // let additional_delay: i32 = {
-        //     let in_to_liq_delay = delay;
-        //     let zero_to_spike_delay = 3; // v_th / max_input = 20 /8
-        //     let liq_to_readout_delay = delay;
-        //     let margin = 1;
-        //     in_to_liq_delay + zero_to_spike_delay + liq_to_readout_delay + margin + delay
-        // };
-        let additional_delay: i32 = 8;
-
-        //let add_delay = in_to_liq_delay + zero_to_spike_delay + liq_to_readout_delay + margin;
-        let n_time_steps = input_time_steps + (additional_delay as usize);
-        // let mut
-        // For every time step in all the time steps
         for t in 0..n_time_steps {
             // For every post synaptic neuron in the liquid
             for n_idx in 0..self.neurons.len() {
-                // If the neuron is in time out, then skip and update timeout
+                // If the neuron has just fired, then skip and update timeout.
                 // Using self.neurons[n_idx] instead of curr_neuron because of
                 // differing mutability calls with get and update methods.
                 if self.neurons[n_idx].get_time_out() > 0 {
@@ -851,15 +793,12 @@ impl LSM {
                 }
 
                 let curr_neuron = &self.neurons[n_idx];
-                // The total change in curr_neuron's voltage
+                // The first part of the voltage dynamics equation, this will be updated
+                // later on as we go through the presynaptic spikes.
                 let mut delta_v: f32 = -curr_neuron.get_voltage() / (self.tau_m as f32);
 
-                // If the neuron is a reservoir input
+                // If the postsynaptic neuron is a reservoir input
                 if curr_neuron.get_spec() == &"liq_in".to_string() {
-                    // We have it already so that the reservoir input knows
-                    // which input layer neuron it's connected to
-                    // We want to change the current neuron's voltage.
-
                     // For the curr_neuron (liq_in), it gets the list of spikes
                     // coming from the input layer
                     let spike_times: &Vec<u32> =
@@ -871,18 +810,18 @@ impl LSM {
                         let model_calc: f32;
                         if curr_neuron.get_input_weight() == 8 {
                             // excitatory synapse
-                            model_calc = self.liq_response(
+                            model_calc = utils::liq_response(
                                 model,
                                 t as i32,
                                 *spike_time as i32,
                                 delay,
-                                first_tau, // first order tau
-                                4, // values from Zhang et al paper for second order tau values
+                                first_tau,
+                                4,
                                 8,
                             );
                         } else {
                             // inhibitory synapse
-                            model_calc = self.liq_response(
+                            model_calc = utils::liq_response(
                                 model,
                                 t as i32,
                                 *spike_time as i32,
@@ -896,19 +835,18 @@ impl LSM {
                     }
                 }
 
-                // The indices of the pre-syn. connections self.neurons[n_idx]
-                // has with the rest of the LSM
+                // The indices of the pre-synaptic connections the current liquid neuron
+                // has with the rest of the liquid
                 let pre_syn_connects: &Vec<usize> = curr_neuron.get_pre_syn_connects();
-                // Loop through all the pre synaptic neuron indices
                 for connect_idx_idx in 0..pre_syn_connects.len() {
                     // For each pre synaptic neuron, loop through all its spikes
                     // The pre synaptic neuron that we are currently looking at
-                    // pre_syn_connects[connect_idx_idx] is the index of one of
-                    // the pre synaptic connections of curr_neuron
+                    // pre_syn_connects[connect_idx_idx] is the index (in self.neurons) of each
+                    // pre synaptic connection for the current neuron.
                     let pre_syn_neuron: &Neuron = &self.neurons[pre_syn_connects[connect_idx_idx]];
 
-                    // Tau values for second order are based on whether the PRE
-                    // Synaptic neuron was Excitatory or Inhibitory
+                    // Tau values for second order model are based on whether the pre-
+                    // synaptic neuron was Excitatory or Inhibitory
                     // E -> I or E -> E, [4, 8]
                     // I -> I or I -> E, [4, 2]
                     let tau_s1 = pre_syn_neuron.get_second_tau()[0];
@@ -917,10 +855,10 @@ impl LSM {
                     // Looks through all the spikes of the pre-syn neuron and calculates
                     // how the voltage will change
                     for spike_time in spike_times.iter() {
-                        // The weight is depended on the neurotransmitter that each pre and
+                        // The weight depends on the neurotransmitter that each pre and
                         // post synaptic neurons puts out
-                        let weight: i32; // Weird warnings. Says it doesn't need to be mut.
-                                         /* EE */
+                        let weight: i32;
+                        /* EE */
                         if pre_syn_neuron.get_nt() == &"exc".to_string()
                             && curr_neuron.get_nt() == &"exc".to_string()
                         {
@@ -943,7 +881,7 @@ impl LSM {
                             weight = self.liq_weights[3];
                         }
 
-                        let model_calc = self.liq_response(
+                        let model_calc = utils::liq_response(
                             model,
                             t as i32,
                             *spike_time as i32,
@@ -958,6 +896,7 @@ impl LSM {
                 self.neurons[n_idx].update_voltage(delta_v);
                 self.neurons[n_idx].update_spike_times(t);
 
+                // Writing to each file
                 if delta_v != 0. {
                     if self.neurons[n_idx].get_voltage() == -5. {
                         f1.write_all(
@@ -980,21 +919,21 @@ impl LSM {
                 }
             }
             f1.write_all(format!("---------------------------------------------------------------------------------------------------------------------------------------------------------{}\n", t as i32 + delay).as_bytes()).expect("Unable to draw");
-            self.readout_read(model, t, delay, first_tau, f2);
-            // self.readout_output();
-
-            // guesses are in self.outputs' most recent element
-            // Train based on this guess
+            self.readout_read(model, t, delay, first_tau, f2); // Updates the readout neurons' firing
         }
+        // The epoch has finished.
+
+        // Guesses what the signal was
         self.readout_output();
         if train {
             // Sets desired activity of each readout set based on input labels
             self.set_c_d(label);
 
-            // Trains based on the potentiation graph (Figure 6) in Zhang et
-            // al paper
+            // Trains based on the potentiation graphs
             self.graph_analysis(f2, prev_epoch_accuracy);
         }
+
+        // Writing readout weights to files once an epoch
         f5.write_all(format!("---------------------------------------------------------------------------------------------------------------------------------------------------------{}\n", epoch).as_bytes()).expect("Unable to write weights");
         for col in 0..self.n_readout_clusters {
             f5.write_all(
@@ -1010,18 +949,19 @@ impl LSM {
         }
 
         // In mins
+        // The weird conversion is to give accuracy in the thousandths for time taken
         let run_time = now.elapsed().as_millis() as f64 / 1000. / 60.;
-        // self.print_test_accuracy(epoch, &labels, f3, f4, additional_delay, run_time)
+        // Epoch result prints out the LSM's guess for the epoch and writes it to a file.
         self.epoch_result(f3, f4, label, epoch, run_time)
     }
 
     pub fn reset(&mut self) {
+        // Once an epoch, reset all of the LSM and neurons instance variables EXCEPT for
+        // readout weights.
+
         // Loop through Input layer
         for input_idx in 0..self.n_inputs {
             self.input_layer[input_idx].set_spike_times(Vec::new());
-            // self.input_layer[input_idx].set_time_out(0);
-            // self.input_layer[input_idx].set_voltage(0.);
-            // self.input_layer[input_idx].set_calcium(0.);
         }
 
         // Loop through Liquid
@@ -1048,14 +988,13 @@ impl LSM {
         &self,
         f3: &mut File,
         f4: &mut File,
-        label: &String,
-        epoch: usize,
-        run_time: f64,
+        label: &String, // The name of the signal in an epoch
+        epoch: usize,   // The current epoch
+        run_time: f64,  // The run time will be written to file here
     ) -> String {
-        let answer: String;
-        let guess = &self.outputs[epoch];
-        // assert_eq!(label == &"talk".to_string() || label == &"hide".to_string(), true);
-        // assert_eq!(guess == &"talk".to_string() || guess == &"hide".to_string(), true);
+        let answer: String; // A scoring of the guess, either correct or incorrect
+        let guess = &self.outputs[epoch]; // The most active readout cluster in an epoch
+
         if label == guess {
             answer = "correct".to_string();
             f3.write_all(
@@ -1078,28 +1017,26 @@ impl LSM {
 
     fn readout_read(
         &mut self,
-        model: &str,
-        curr_t: usize,
-        delay: i32,
-        first_tau: u32,
-        f: &mut File,
+        model: &str,     // The model for calculation we will use (Static, first order, second order)
+        curr_t: usize,   // The current time step at which to update readouts
+        delay: i32,      // The delay for voltage dynamics
+        first_tau: u32,  // If first order, this is its hyper parameter
+        f: &mut File,    // Readout information file
     ) {
         // For each time step, we calculate from the neuron activity of the
         // reservoir and update the calcium / voltage of the readout neurons.
 
-        // let mut f = File::create("readout.txt").expect("Unable to create a file");
-
-        // Assuming each cluster has the same # of neurons
+        // Assuming each cluster has the same number of neurons
         let count: usize = self.n_total / self.n_clusters;
         for cluster_idx in 0..self.n_clusters {
-            // For each readout neuron
             for r_idx in 0..self.readouts[cluster_idx].len() {
-                // Calcium decay
+                // Calcium decay, the first part of the calcium dynamics equation.
+                // If there were no presynaptic spikes, the calcium decays slowly. 
                 let mut delta_c: f32 =
                     -self.readouts[cluster_idx][r_idx].get_calcium() / (self.tau_c as f32);
-                self.readouts[cluster_idx][r_idx].update_calcium(delta_c);
+                self.readouts[cluster_idx][r_idx].update_calcium(delta_c); // adds delta_c to its c_r value
 
-                // Time out stuff
+                // If a readout has just fired, update its refractory period
                 if self.readouts[cluster_idx][r_idx].get_time_out() > 0 {
                     self.readouts[cluster_idx][r_idx].update_time_out();
                     continue;
@@ -1107,40 +1044,25 @@ impl LSM {
 
                 let curr_readout: &Neuron = &self.readouts[cluster_idx][r_idx];
                 let mut delta_v: f32 = -curr_readout.get_voltage() / (self.tau_m as f32);
-                delta_c = 0.;
+                delta_c = 0.; // since we already updated the calcium earlier
 
-                // For each neuron in the cluster; these are pre-synaptic neurons
-                // to each readout neuron
+                // Goes (0..(size of the cluster)) in a loop for as many equal sized
+                // clusters there are.
                 for n_idx in (cluster_idx * count)..((cluster_idx + 1) * count) {
-                    // n_idx is each neuron in the cluster. And each liquid
-                    // neuron in a cluster is a PRE-Synaptic neuron to the readout
+                    // self.neurons[n_idx] is the current liquid neuron in the cluster. 
+                    // Each liquid neuron in a cluster is a presynaptic neuron to the readout
                     let pre_syn_neuron: &Neuron = &self.neurons[n_idx];
                     let tau_s1 = pre_syn_neuron.get_second_tau()[0];
                     let tau_s2 = pre_syn_neuron.get_second_tau()[1];
 
                     let spike_times: &Vec<u32> = pre_syn_neuron.get_spike_times();
-                    // if spike_times.len() != 0 {
-                    //     println!("Spike times: {:?}, Curr_time: {}", spike_times, curr_t);
-                    // }
-                    // if spike_times.len() != 0 {
-                    //     f.write_all(
-                    //         format!(
-                    //             "Spike times of Neuron {}: {:?}\n",
-                    //             self.neurons[n_idx].get_id(),
-                    //             spike_times
-                    //         )
-                    //         .as_bytes(),
-                    //     )
-                    //     .expect("Unable to write");
-                    // }
-
-                    let mut change: f32 = 0.;
+                    // Used in learning rule for calculating which neurons spiked into readout.
+                    // It does not take into account voltage decay, just the spikes and weights. 
+                    let mut change: f32 = 0.; 
                     for spike_time in spike_times.iter() {
-                        // Update voltage and calcium (a la equation 14, 21 in Zhang et al)
-
-                        // println!("{}",n_idx)
+                        // Updates voltage and calcium dynamics for readouts
                         let weight: f32 = self.readout_weights[cluster_idx][(r_idx, n_idx % count)];
-                        let model_calc: f32 = self.liq_response(
+                        let model_calc: f32 = utils::liq_response(
                             model,
                             curr_t as i32,
                             spike_time.clone() as i32,
@@ -1149,22 +1071,6 @@ impl LSM {
                             tau_s1,
                             tau_s2,
                         );
-                        // let teacher_signal: f32 = injected_current(); MAYBE LATER
-                        // delta_v += weight * model_calc + teacher_signal;
-                        // if model_calc != 0. {
-                        //     f.write_all(
-                        //         format!(
-                        //             "Neuron {}, Spike time {}: Delta voltage increment:[ w: {}, m_c: {}, d_v: {} ]\n",
-                        //             self.neurons[n_idx].get_id(),
-                        //             spike_time,
-                        //             weight,
-                        //             model_calc,
-                        //             weight * model_calc
-                        //         )
-                        //         .as_bytes(),
-                        //     )
-                        //     .expect("Unable to write");
-                        // }
                         change += weight * model_calc;
                         delta_v += change;
                     }
@@ -1173,17 +1079,17 @@ impl LSM {
                 self.readouts[cluster_idx][r_idx].update_voltage(delta_v);
                 self.readouts[cluster_idx][r_idx].update_spike_times(curr_t);
 
-                // Update of Calcium
+                // Update of calcium
                 let r_spike_times = self.readouts[cluster_idx][r_idx].get_spike_times();
                 if !r_spike_times.is_empty() {
                     let last_spike_time = r_spike_times[r_spike_times.len() - 1];
                     // If the readout spiked in the current time step, add one to
                     // calcium
-                    delta_c += self.delta_calcium(curr_t as i32 - last_spike_time.clone() as i32);
+                    delta_c += utils::delta(curr_t as i32 - last_spike_time.clone() as i32);
                 }
                 self.readouts[cluster_idx][r_idx].update_calcium(delta_c);
 
-                // Writing to file!
+                // Writing to file for readouts
                 if delta_v != 0. || delta_c != 0. {
                     if self.readouts[cluster_idx][r_idx].get_voltage() == -5. {
                         f.write_all(
@@ -1211,8 +1117,10 @@ impl LSM {
     }
 
     fn readout_output(&mut self) {
-        // MUST CHANGE TO WORK WITH NOTHING
-        // Get the readout's guess once per epoch, at the end
+        // Determines the LSM's readout's guess at the end of every epoch by
+        // calculating the activity of each function
+
+        // Storing all the c_r for every readout neuron per epoch
         let mut all_c_r: Vec<Vec<f32>> = Vec::new();
         for cluster_idx in 0..self.n_clusters {
             let mut curr_readout_cluster: Vec<f32> = Vec::new();
@@ -1221,11 +1129,12 @@ impl LSM {
             }
             all_c_r.push(curr_readout_cluster);
         }
-        self.readouts_c_r.push(all_c_r); // Holds all the real calciums per epoch, may be large
+        self.readouts_c_r.push(all_c_r); 
 
-        // Find the cluster whose calcium is biggest
+        // Find the cluster whose total calcium is largest
+        // We sum each calcium in this list which is the number of functions long. 
         let mut output_c_total: Vec<f32> = vec![0.; self.n_readout_clusters];
-        // Find total amount of calcium per cluster
+
         for cluster_idx in 0..self.n_clusters {
             for r_idx in 0..self.readouts[cluster_idx].len() {
                 let curr_readout: &Neuron = &self.readouts[cluster_idx][r_idx];
@@ -1233,10 +1142,12 @@ impl LSM {
             }
         }
 
+        // The index of every max calcium total (accounting for ties)
         let mut max_val_idx: Vec<usize> = Vec::new();
         let mut max_c_val: f32 = 0.; // Most calcium in any cluster
         let mut max_c_idx: usize = 0; // Index of cluster with most calcium
         for (key, val) in output_c_total.iter().enumerate() {
+            // Finds the maximum value and stores their indices (in any case)
             if val == &max_c_val {
                 max_val_idx.push(key.clone());
             }
@@ -1247,6 +1158,7 @@ impl LSM {
             }
         }
 
+        // If there is a tie, we calculate the readout's voltage and compare those
         let mut r_volts = vec![0.; self.n_readout_clusters];
         if max_val_idx.len() > 1 {
             for r_idx in 0..self.readouts[0].len() {
@@ -1256,8 +1168,8 @@ impl LSM {
                     }
                 }
             }
-            let mut max_v_val: f32 = 0.; // Most calcium in any cluster
-            let mut max_v_idx: usize = 0; // Index of cluster with most calcium
+            let mut max_v_val: f32 = 0.; // Most voltage in any cluster
+            let mut max_v_idx: usize = 0; // Index of cluster with most voltage
             for (key, val) in r_volts.iter().enumerate() {
                 if val > &max_v_val {
                     max_v_val = val.clone();
@@ -1271,47 +1183,49 @@ impl LSM {
             } else {
                 self.outputs.push("nothing".to_string());
             }
-        } else {
+        } else { 
+            // If there is no tie
             // Outputs the cluster guess of the cluster with the highest calcium conc.
             if output_c_total[max_c_idx]
                 >= self.c_th * (self.readouts[0].len() / self.n_readout_clusters) as f32
             {
                 self.outputs.push(CLUSTERS[max_c_idx].to_string());
+            // If there is not enough calcium activity, treat it as nothing / ambience
             } else {
-                self.outputs.push("nothing".to_string());
+                self.outputs.push("nothing".to_string()); // "nothing" is an arbitrary name
             }
         }
     }
 
     fn update_weights(
         &mut self,
-        f2: &mut File,
-        cluster_idx: usize,
-        r_idx: usize,
-        delta_weight: f32,
-        instruction: &str,
-        contribution: &str,
+        f2: &mut File,      // Records readout weights
+        cluster_idx: usize, // The current cluster we are in
+        r_idx: usize,       // The current readout neuron
+        delta_weight: f32,  // The weight by which we will potentiate
+        instruction: &str,  // Either "potentiate" or "depress"
+        contribution: &str, // Either "pos" or "neg" 
     ) {
+        // Updates the weights between readout and liquid for a readout function based
+        // on some instruction and its activity (in graph_analysis below).
         assert_eq!(
             instruction == "potentiate" || instruction == "depress",
             true
         );
         assert_eq!(contribution == "pos" || contribution == "neg", true);
 
-        // loop through its pre-syn neurons and increase the weights for them
-        // let seed = [13; 32];
-        // let mut rng = StdRng::from_seed(seed);
-
-        // let mut rng = rand::thread_rng();
+        // Loop through its pre-syn neurons and increase the weights for them
         let n_count = self.n_total / self.n_clusters; // Number of neurons in 1 cluster
-                                                      // readout_weights is a list of matrices representing the weights
-                                                      // between neurons in the liquid and the readout neurons
         for n_idx in 0..n_count {
-            if instruction == "potentiate" {
+            // Potentiates the weights if the calcium desired is high
+            if instruction == "potentiate" { 
                 if contribution == "pos" {
+                    // If a presynaptic neuron has spiked into this readout
                     if self.responsible_liq[r_idx][n_idx] > 0. {
                         let sum = self.readout_weights[cluster_idx][(r_idx, n_idx)] + delta_weight;
+                        // Limiting the readout weights, again by -8 and 8
                         if sum < self.r_weight_max {
+                            // Writing to a file that tracks readout weights per time step and epoch
                             f2.write_all(
                                 format!(
                                     "----> Weight of Neuron {} ↑ from {} to {}",
@@ -1326,6 +1240,7 @@ impl LSM {
                         }
                     }
                 } else if contribution == "neg" {
+                    // If a presynaptic neuron has not spiked into this readout, but it should have
                     if self.responsible_liq[r_idx][n_idx] < 0. {
                         let sum = self.readout_weights[cluster_idx][(r_idx, n_idx)] + delta_weight;
                         if sum < self.r_weight_max {
@@ -1343,6 +1258,7 @@ impl LSM {
                         }
                     }
                 }
+            // Depresses the weights if the desired calcium is low
             } else if instruction == "depress" {
                 if contribution == "pos" {
                     if self.responsible_liq[r_idx][n_idx] > 0. {
@@ -1384,13 +1300,11 @@ impl LSM {
     }
 
     fn set_c_d(&mut self, curr_label: &String) {
-        // This function happens in one epoch.
-        // Check the current label in labels and set the c_d's in that cluster to a
+        // In one epoch, the LSM checks the current label in labels and sets the c_d's in that cluster to a
         // high number and the other clusters to a low c_d.
         let high_c_d: usize = 10;
         let low_c_d: usize = 0;
 
-        // // Current label is the label from the input at this time step.
         let mut all_calciums: Vec<Vec<f32>> = Vec::new();
         // For each cluster, push the readout neurons' desired calciums into a vector
         // and the column of a matrix
@@ -1409,13 +1323,17 @@ impl LSM {
             }
             all_calciums.push(curr_readout_cluster);
         }
-        self.readouts_c_d.push(all_calciums); // readouts_c_d is filled once per epoch
+        self.readouts_c_d.push(all_calciums); 
     }
 
     fn graph_analysis(&mut self, f2: &mut File, _prev_epoch_accuracy: f32) {
-        // For one time step, if the calcium is within a certain range of
-        // the threshold, then we potentiate weights.
-        // Otherwise, we depress weights.
+        // Once a time step, during training, we analyze whether the calcium is
+        // at the right spot for training. This function only doesn't potentiate or
+        // depress if the real calcium of the readout is at the right position. 
+        // Note that C_d changes, most probably, every epoch, so the outcome changes
+        // often. 
+        
+        // Below is a model of our training rule, with
         // d - depress, p - potentiate, c_m - margin above / below c_th
         // c_r
         //              |  d    |    N
@@ -1425,16 +1343,10 @@ impl LSM {
         //              |  N    |    p
         //              |___________________
         //                     c_th      c_d
-        // For each readout neuron's calcium values, if it's within a range
-        // of the threshold, we potentiate.
-        // let acc_coeff = 1.5 * f32::exp((-1. / 3.0) * prev_epoch_accuracy);
-        let acc_coeff = 1.;
-        // let mut rng = rand::thread_rng();
-        let scale = 1.;
-        let high_d_w = 0.1 * scale * acc_coeff; // (0.05-0.15)
-        let mid_d_w = 0.05 * scale * acc_coeff; // (0.025-0.075)
-        let low_d_w = 0.025 * scale * acc_coeff; // (0.01 - 0.035)
-                                                 // let prob: f32 = (rng.gen::<f32>() / 2.) + 0.25; // Probability of Potentiation or depression
+
+        let high_d_w = 0.1; 
+        let mid_d_w = 0.05; 
+        let low_d_w = 0.025;
         for cluster_idx in 0..self.n_clusters {
             for r_idx in 0..self.readouts[cluster_idx].len() {
                 let c_r: f32 = self.readouts[cluster_idx][r_idx].get_calcium();
@@ -1451,8 +1363,8 @@ impl LSM {
                         self.update_weights(f2, cluster_idx, r_idx, low_d_w, "potentiate", "pos");
                         self.update_weights(f2, cluster_idx, r_idx, low_d_w, "potentiate", "neg");
                     }
-                // if c_r > c_th + c_margin, we don't learn
-                // Left
+                    // On the top right of the graph, no learning
+                // Left of the x axis
                 } else {
                     if c_r > self.c_th + self.c_margin {
                         self.update_weights(f2, cluster_idx, r_idx, high_d_w, "depress", "pos");
@@ -1464,11 +1376,7 @@ impl LSM {
                         self.update_weights(f2, cluster_idx, r_idx, low_d_w, "depress", "pos");
                         self.update_weights(f2, cluster_idx, r_idx, low_d_w, "depress", "neg");
                     }
-                    /*
-                    // if c_r == 0 and c_d == 0 it ends here without going
-                    // through either if statement
-                    // Perhaps because on the graph it says not to learn, so we ignore it.
-                     */
+                    // On the bottom left of the graph, no learning
                 }
             }
         }

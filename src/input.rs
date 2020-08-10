@@ -1,14 +1,18 @@
+/*
+    We process the input file coming from lsm-input program in this file. 
+*/
+
 #![allow(dead_code)]
 
 use std::fs;
 
 pub fn read_input() -> Vec<Vec<u32>> {
-    // Read Perkins' input file (a list of spike trains)
-    // This input is of the form where # rows > # columns
+    // Read our input file (a list of spike trains)
+    // This input is of the form (# columns > # rows usually)
     // 0 0 0 1 1 0 0 1 0
     // 0 1 0 1 1 0 1 0 1
     // ...
-    // This function stores that in a list by column (assuming the file is transposed).
+    // This function stores that in a list by column.
     const RADIX: u32 = 10; // base 10
     let contents = fs::read_to_string("input.txt").expect("Unable to read input file");
     let contents: Vec<&str> = contents.split("\n").collect();
@@ -40,15 +44,16 @@ pub fn read_labels() -> Vec<String> {
 }
 
 pub fn read_training_input() -> Vec<Vec<Vec<u32>>> {
-    // Read Perkins' input file (a list of spike trains)
-    // This input is of the form where # rows > # columns
+    // Read the input file (a list of spike trains).
+    // This input is of the form where # rows > # columns and there
+    // is a '#' marking the end of an epoch.
     // 0 0 0 1 1 0 0 1 0
     // 0 1 0 1 1 0 1 0 1
     // ...
     // #
     // ...
     // #
-    // This function stores that in a list by column (assuming the file is transposed).
+    // This function stores that in a list by column.
     let mut input: Vec<Vec<Vec<u32>>> = Vec::new();
     let mut train_batch: Vec<Vec<u32>> = Vec::new();
 

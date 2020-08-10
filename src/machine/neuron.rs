@@ -1,36 +1,41 @@
+/*
+    The Neuron class is a representation of an integration of fire neuron. This data structure is simply used for holding
+    data for the Liquid State Machine. Most methods are for accessing instance variables or assignment.  
+
+    Note: Generally, for presynaptic neurons and other information regarding connections, we implement them as 
+    vectors of indices, representing the index of that neuron in the LSM's master neurons list. 
+*/
+
 use kiss3d::scene::SceneNode;
 use nalgebra::base::Vector3;
 use nalgebra::geometry::Translation3;
 use std::fmt;
 
 static TYPES: [&str; 4] = ["in", "liq_in", "liq", "readout"]; // The three types of neurons in our LSM
-static NTS: [&str; 2] = ["exc", "inh"]; // types of neurotransmitters
-// pub static CLUSTERS: [&str; 4] = ["talk", "hide", "run", "eat"];
-pub static CLUSTERS: [&str; 3] = ["hide", "run", "eat"];
-
+static NTS: [&str; 2] = ["exc", "inh"]; // types of neurotransmitters, short for Excitatory and Inhibitory
+pub static CLUSTERS: [&str; 3] = ["hide", "run", "eat"]; // The functions we have. If we change the number of signals, change this.
 
 #[derive(Clone)]
 pub struct Neuron {
-    id: usize,
-    obj: SceneNode, // a sphere design associated with the neuron
-    // connects: Vec<u32>, // 1's and 0's representing a connection for 1 and not for 0
-    spec: String,                 // Specialization (either input, output, or liquid)
-    nt: String,                   // Neurotransmitter type, excitatory or inhibitory
-    cluster: String,              // The cluster self belongs to. Usually a task name.
-    loc: Vector3<f32>,            // The location of the sphere associated with self
-    input_weight: i32,            // The weight at which spike trains are read (only for "liq_in")
-    v: f32,                       // Voltage of a neuron (mV)
-    v_th: f32,                    // Voltage threshold to activate (mV)
-    v_rest: f32,                  // The resting voltage (mV)
+    id: usize, // Identification number for each neuron 
+    pre_syn_connects: Vec<usize>, // Indices of pre-synaptic neurons in LSM's neuron array
+    spike_times: Vec<u32>, // The times at which a spike / neuron fire happens (an index of a 1 in a spike train)
+    obj: SceneNode, // A sphere graphic associated with the neuron
+    spec: String,       // Specialization (either input, output, or liquid)
+    nt: String,         // Neurotransmitter type, excitatory or inhibitory
+    cluster: String,    // The cluster self belongs to. Usually a task / function name.
+    loc: Vector3<f32>,  // The location of the sphere associated with self
+    second_tau: [u32; 2],  // Time constants for second order model for voltage
+    input_connect: usize,  // The index of the input layer neuron this is connected to. (only if "liq_in")
+    input_weight: i32,  // The weight at which spike trains are read (only for "liq_in")
+    v: f32,             // Voltage of a neuron (mV)
+    v_th: f32,          // Voltage threshold to activate (mV)
+    v_rest: f32,        // The resting voltage (mV)
+    c: f32,    // Calcium of a readout neuron
+    c_d: f32,  // Desired calcium of a readout neuron
+    c_th: f32,  // The Calcium threshold
     refrac_period: u32, // Refractory period, the time (in ms) it takes to get back to resting
     time_out: u32,      // Used for tracking refractory period
-    pre_syn_connects: Vec<usize>, // Indices of pre-synaptic neurons
-    spike_times: Vec<u32>, // The times at which a spike / neuron fire happens (an index of a 1 in a spike train)
-    input_connect: usize, // The index of the input layer neuron this is connected to. (only if "liq_in")
-    second_tau: [u32; 2], // Time constants for second order model for voltage
-    c: f32,               // Calcium of a readout neuron
-    c_d: f32,             // Desired calcium of a readout neuron
-    c_th: f32             // The Calcium threshold
 }
 
 impl fmt::Display for Neuron {
@@ -58,7 +63,6 @@ impl Neuron {
     // Constructor for Neuron objects \\
     pub fn new(
         obj: SceneNode,
-        // connects: Vec<u32>, /*, v: f32, theta: f32, v_rest: f32, n_t: String, input: bool, read_out: bool*/
         spec: &str,
         cluster: &str,
     ) -> Neuron {
@@ -66,12 +70,8 @@ impl Neuron {
         Self {
             id: 0,
             obj: obj,
-            // connects: connects,
-            spec: spec.to_string(),
-            // n_t: n_t
-            // input: input,
-            // read_out: read_outn
-            nt: "".to_string(), // neither exc nor inh
+            spec: spec.to_string(), 
+            nt: "".to_string(), 
             cluster: cluster.to_string(),
             loc: Vector3::<f32>::new(0., 0., 0.),
             input_weight: 0,

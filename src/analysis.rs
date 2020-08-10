@@ -1,3 +1,7 @@
+/*
+    Most of the information about the liquid that we put into files are written here. 
+*/
+
 use std::fs::File;
 use std::io::Write;
 
@@ -9,11 +13,11 @@ pub fn analysis(
     n: usize,                   // The number of neurons in a cluster
     c: [f32; 5],                // C and lambda are our hyper-parameters for connect_chance in LSM
     lambda: f32,
-    rm_dis_n: bool,
-    rm_n_count: usize, // The number of disconnected neurons
+    rm_dis_n: bool,             // Whether we want to remove disconnected neurons
+    rm_n_count: usize,          // The number of disconnected neurons
 ) {
-    // Calculates the average number of connections per neuron and outputs some  \\
-    // information about hyper parameters to a txt file. \\
+    // Calculates the average number of connections per neuron and outputs some 
+    // information about hyper parameters to a txt file.
     let mut data: Vec<String> = Vec::new(); // Our return value
     let mut sum_connects: u32 = 0; // The number of connections in total
     let mut sum_dist: f32 = 0.; // The total length of all edges in a cluster
@@ -43,7 +47,7 @@ pub fn analysis(
     data.push(format!("\nAverage number of connections per neuron: {:.2}\nAverage distance between connection     : {:.2}\n",
         avg_num, avg_dist
     ));
-    let m = min_max(dists);
+    let m = min_max(dists); // a tuple of both the minimum and maximum in a Vector
     data.push(format!(
         "\nFarthest connection: {:.2}\nClosest connection : {:.2}\n",
         m.1, m.0
@@ -60,10 +64,10 @@ pub fn analysis(
     }
 }
 
-// Helper functions \\
+// Helper functions
 
 fn min_max(dists: &Vec<f32>) -> (f32, f32) {
-    // Helper function to get the minimum and maximum in a vector of floats. \\
+    // Helper function to get the minimum and maximum in a vector of floats.
     if dists.len() == 0 {
         return (f32::NAN, f32::NAN);
     }
@@ -82,7 +86,11 @@ fn min_max(dists: &Vec<f32>) -> (f32, f32) {
     (min, max)
 }
 
-pub fn epoch_accuracy(scores: Vec<String>, last_n: usize) -> f32 {
+pub fn epoch_accuracy(
+    scores: Vec<String>, // The guesses of an LSM scored, either "correct" or "incorrect"
+    last_n: usize)       // The sample size for the average we will take. 
+    -> f32 {
+    // Calculates a running accuracy for last_n previous epochs.  
     let scores_len = scores.len();
     if scores_len < last_n {
         return 0.;
